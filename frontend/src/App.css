@@ -1,0 +1,19 @@
+@import "tailwindcss";
+.win-animation {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  background: gold;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  animation: fadeInOut 3s ease forwards;
+  z-index: 9999;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
