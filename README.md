@@ -1,9 +1,9 @@
-Chess.in
+# ♟️Chess.in
 
 A real-time multiplayer chess game built using **Node.js**, **WebSockets**, **Prisma**, and **PostgreSQL**.
 Players can sign up, log in, and play chess against another player with real-time move synchronization.
 
-Features
+## Features
 
 * Real-time multiplayer gameplay
 * User authentication (Signup / Login)
@@ -13,14 +13,14 @@ Features
 * Game restart functionality
 * Interactive chess board
 
-## 🛠 Tech Stack
+## Tech Stack
 
 **Frontend:** HTML, CSS, JavaScript
 **Backend:** Node.js, Express.js, WebSockets
 **Database:** PostgreSQL with Prisma ORM
 **Authentication:** JWT
 
-## ⚙️ Setup
+## Setup
 
 Clone the repository:
 
@@ -44,7 +44,7 @@ npm run dev
 Server will run on:
 http://localhost:3000
 
-## 📌 Future Improvements
+## Future Improvements
 
 * Matchmaking system
 * Player rating (ELO)
