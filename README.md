@@ -1,4 +1,4 @@
-# ♟️ Chess Game
+# ♟️ Chess.in
 
 A real-time multiplayer chess game built using **Node.js**, **WebSockets**, **Prisma**, and **PostgreSQL**.
 Players can sign up, log in, and play chess against another player with real-time move synchronization.
