@@ -1,9 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { Button } from "./Button"
+import { useAuth } from "../context/AuthContext"
 
 export const LoginSidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { logout } = useAuth();
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -72,9 +74,7 @@ export const LoginSidebar = () => {
                 <Button 
                     className="w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 text-red-400 hover:bg-red-500/10" 
                     onClick={() => {
-                        localStorage.removeItem("googleUser");
-                        localStorage.removeItem("email");
-                        localStorage.removeItem("name");
+                        logout();
                         navigate("/");
                     }}>
                     <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">

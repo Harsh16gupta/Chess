@@ -1,13 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { LoginSidebar } from "../components/LoginSidebar";
 import { Button } from "../components/Button";
-
-export const EMAIL = localStorage.getItem("email");
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("googleUser") || "{}");
-  console.log(user);
+  const { user } = useAuth();
 
   return (
     <div className="flex w-full min-h-screen bg-[url('/homeback.jpg')] bg-cover bg-center bg-no-repeat text-white">
@@ -19,7 +17,7 @@ export default function Home() {
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
-            {user.picture && (
+            {user?.picture && (
               <img
                 src={user.picture}
                 alt="Profile"
@@ -27,8 +25,8 @@ export default function Home() {
               />
             )}
             <div>
-              <div className="text-xl font-semibold">{user.name || "Guest"}</div>
-              <div className="text-sm text-gray-300">{user.email || EMAIL}</div>
+              <div className="text-xl font-semibold">{user?.name || "Guest"}</div>
+              <div className="text-sm text-gray-300">{user?.email}</div>
             </div>
           </div>
         </div>

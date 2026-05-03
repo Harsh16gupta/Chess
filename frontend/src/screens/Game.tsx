@@ -4,9 +4,9 @@ import { ChessBoard } from "../components/ChessBoard";
 import { SideBar } from "../components/SideBar";
 import { useSocket } from "../hooks/useSockets";
 import { Chess } from "chess.js";
-import { EMAIL } from "./Home";
 import type { Square } from "chess.js";
 import { LoginSidebar } from "../components/LoginSidebar";
+import { useAuth } from "../context/AuthContext";
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -28,6 +28,7 @@ function genGuestName() {
 }
 
 export default function Game() {
+  const { user } = useAuth();
   const socket = useSocket(); // WebSocket | null
   const [chess] = useState(() => new Chess());
   const [board, setBoard] = useState(chess.board());
@@ -60,6 +61,7 @@ export default function Game() {
 
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [validMoves, setValidMoves] = useState<string[]>([]);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
 
 
   // Connection status
@@ -70,8 +72,8 @@ export default function Game() {
 
   // initialize guest name / username
   useEffect(() => {
-    if (EMAIL) {
-      setMyName(EMAIL);
+    if (user?.email) {
+      setMyName(user.email);
       return;
     }
     const stored = localStorage.getItem("guestName");
@@ -80,7 +82,7 @@ export default function Game() {
       // delay opening modal until user tries to play (so modal doesn't annoy)
       setMyName(null);
     }
-  }, []);
+  }, [user?.email]);
 
   // connection state tracking
   useEffect(() => {
@@ -108,18 +110,6 @@ export default function Game() {
       }
       return;
     }
-    if (started) {
-      if (whiteSeconds === 0) {
-        setStarted(false);
-        setGameOverMessage(`${players.black} wins on time!`);
-        triggerWinAnimation();
-      }
-      if (blackSeconds === 0) {
-        setStarted(false);
-        setGameOverMessage(`${players.white} wins on time!`);
-        triggerWinAnimation();
-      }
-    }
 
     if (tickRef.current) return;
     tickRef.current = window.setInterval(() => {
@@ -128,10 +118,25 @@ export default function Game() {
       lastSyncRef.current = now;
 
       setTimeLeftMs((prev) => {
-        const copy = { ...prev };
-        if (currentTurn === "white") copy.white = Math.max(0, prev.white - elapsed);
-        else copy.black = Math.max(0, prev.black - elapsed);
-        return copy;
+        const updated = { ...prev };
+        if (currentTurn === "white") updated.white = Math.max(0, prev.white - elapsed);
+        else updated.black = Math.max(0, prev.black - elapsed);
+
+        // Detect timeout inside the callback (always has fresh values)
+        if (updated.white <= 0 && prev.white > 0) {
+          setTimeout(() => {
+            setStarted(false);
+            setGameOverMessage(`${players.black} wins on time!`);
+          }, 0);
+        }
+        if (updated.black <= 0 && prev.black > 0) {
+          setTimeout(() => {
+            setStarted(false);
+            setGameOverMessage(`${players.white} wins on time!`);
+          }, 0);
+        }
+
+        return updated;
       });
     }, 1000);
 
@@ -241,7 +246,7 @@ export default function Game() {
 
   // Start matchmaking flow
   const startMatch = (nameOverride?: string) => {
-    const name = EMAIL || nameOverride || myName;
+    const name = user?.email || nameOverride || myName;
     if (!name) {
       setGuestModalOpen(true);
       return;
@@ -255,7 +260,7 @@ export default function Game() {
     // set matching state true
     setIsMatching(true);
 
-    if (!EMAIL) localStorage.setItem("guestName", name);
+    if (!user?.email) localStorage.setItem("guestName", name);
 
     socket.send(
       JSON.stringify({
@@ -266,12 +271,7 @@ export default function Game() {
   };
 
 
-  // Called by ChessBoard on local move
-  const onLocalMove = (move: { from: string; to: string } | string) => {
-    if (!socket || (socket as any).readyState !== 1) return;
-    socket.send(JSON.stringify({ type: MOVE, payload: { move } }));
-  };
-
+  // Called when the user clicks a square on the board
   const onSquareClick = (square: string) => {
     // Restrict move to correct player
     if (!myColor || myColor !== currentTurn) {
@@ -310,7 +310,10 @@ export default function Game() {
       }
 
       // Send move to server
-      onLocalMove({ from: selectedSquare, to: sq });
+      if (socket && (socket as any).readyState === 1) {
+        socket.send(JSON.stringify({ type: MOVE, payload: { move: { from: selectedSquare, to: sq } } }));
+      }
+      setLastMove({ from: selectedSquare, to: sq });
       setSelectedSquare(null);
       setValidMoves([]);
 
@@ -345,12 +348,6 @@ export default function Game() {
       payload: { text }
     }));
 
-    // Update local state (matches state type)
-    
-
-    console.log("Sent chat:", text);
-    console.log("All messages:", chatMessages);
-
     setChatInput("");
   };
 
@@ -383,7 +380,7 @@ export default function Game() {
   // Player bars above and below board are fixed-height so both names show
   return (
     <div className="flex h-screen w-screen bg-stone-800 text-white">
-      {!EMAIL ? <SideBar /> : <LoginSidebar />}
+      {!user ? <SideBar /> : <LoginSidebar />}
       
 
       <div className="flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative">
@@ -415,15 +412,12 @@ export default function Game() {
           {/* board container (smaller so both bars visible) */}
           <div className=" " style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
             <ChessBoard
-              chess={chess}
-              setBoard={(b: any) => setBoard(b)}
               board={board}
-              socket={socket}
-              myColor={myColor}
-              onLocalMove={onLocalMove}
-              onSquareClick={onSquareClick}
+              flipped={myColor === "black"}
               selectedSquare={selectedSquare}
               validMoves={validMoves}
+              lastMove={lastMove}
+              onSquareClick={onSquareClick}
             />
 
           </div>
@@ -467,7 +461,7 @@ export default function Game() {
             </div>
           )}
         </div>
-        {!started && !EMAIL && (
+        {!started && !user && (
          <div className=" flex items-center justify-center ">
           <div className="bg-stone-900 p-6 rounded-md w-80">
             <div className="text-xl font-bold mb-3">Enter your name</div>
@@ -491,7 +485,7 @@ export default function Game() {
         </div>
       )}
 
-      {!started && EMAIL && (
+      {!started && user && (
          <div className="flex justify-center gap-2 m-5 bg-lime-500 text-2xl">
               <Button
                 onClick={startMatch}
@@ -513,7 +507,7 @@ export default function Game() {
                   <div className="text-xs text-gray-400">No messages yet — say hi!</div>
                 )}
                 {chatMessages.map((msg, i) => {
-                  const mine = msg.sender === (myName || EMAIL);
+                  const mine = msg.sender === (myName || user?.email);
                   return (
                     <div
                       key={i}

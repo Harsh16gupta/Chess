@@ -3,13 +3,15 @@ import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { useState } from "react";
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 
 export default function Email() {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [email1 , setEmail1] = useState("");
     const [Password , setPassword] = useState("");
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // ✅ Added state
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const onclick = async () => {
         console.log("Logging in with:", email1, Password);
@@ -22,8 +24,9 @@ export default function Email() {
             const { token, user } = res.data;
             const { email, rating } = user;
 
+            // Save auth state via context
+            login(email);
             localStorage.setItem("token", token);
-            localStorage.setItem("email", email);
             localStorage.setItem("rating", rating);
 
             setIsLoggedIn(true); // ✅ Show success message

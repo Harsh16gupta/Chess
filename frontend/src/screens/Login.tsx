@@ -1,9 +1,11 @@
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -13,9 +15,8 @@ export default function Login() {
         });
         const { email, name, picture } = res.data;
 
-        // Save user data
-        localStorage.setItem("email", email);
-        localStorage.setItem("name", name);
+        // Save user data via AuthContext
+        authLogin(email, { name, picture });
         localStorage.setItem("googleUser", JSON.stringify(res.data));
         console.log("Google user profile:", res.data);
         navigate("/home");
