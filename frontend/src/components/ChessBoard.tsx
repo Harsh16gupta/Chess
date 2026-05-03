@@ -19,10 +19,8 @@ interface ChessBoardProps {
 // ─── Piece image mapping ────────────────────────────────────
 // Maps chess.js piece data to image filenames in /public
 function getPieceImage(color: Color, type: PieceSymbol): string {
-  // Black pieces: lowercase filename (b.png, k.png, etc.)
-  // White pieces: uppercase + " copy" filename (B copy.png, K copy.png, etc.)
-  if (color === "b") return `/${type}.png`;
-  return `/${type.toUpperCase()} copy.png`;
+  const prefix = color === "b" ? "b" : "w";
+  return `/${prefix}${type.toUpperCase()}.png`;
 }
 
 // ─── Square colors ──────────────────────────────────────────

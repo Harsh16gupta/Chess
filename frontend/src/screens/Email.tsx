@@ -1,105 +1,134 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
 import { useState } from "react";
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-
 export default function Email() {
     const navigate = useNavigate();
     const { login } = useAuth();
-    const [email1 , setEmail1] = useState("");
-    const [Password , setPassword] = useState("");
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [errorMsg, setErrorMsg] = useState("");
 
-    const onclick = async () => {
-        console.log("Logging in with:", email1, Password);
+    const handleSubmit = async () => {
+        if (!email || !password) return;
+        setStatus("loading");
+
         try {
-            const res = await axios.post('http://localhost:3000/api/auth/signup', { 
-                email: email1,
-                password: Password, 
+            const res = await axios.post('http://localhost:3000/api/auth/signup', {
+                email,
+                password,
             });
 
             const { token, user } = res.data;
-            const { email, rating } = user;
 
-            // Save auth state via context
-            login(email);
+            login(user.email);
             localStorage.setItem("token", token);
-            localStorage.setItem("rating", rating);
+            localStorage.setItem("rating", user.rating);
 
-            setIsLoggedIn(true); // ✅ Show success message
-            console.log(res.data);
-            console.log(email);
-            console.log(rating);
-
-            setTimeout(() => {
-                navigate("/home");
-            }, 1000); // ✅ Optional delay to show message
-
-        } catch(e) {
-            console.log("error signing in");
+            setStatus("success");
+            setTimeout(() => navigate("/home"), 800);
+        } catch (e: any) {
+            setStatus("error");
+            setErrorMsg(e?.response?.data?.message || "Sign up failed. Try again.");
         }
     };
 
     return (
-        <div className="flex flex-col items-center h-screen w-screen bg-stone-800 text-white">
-            {/* Header */}
-            <div className="relative flex items-center w-full px-8 py-4">
-                <div className="w-20"></div>
-
-                <div className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer text-5xl font-bold text-white px-6 py-2 rounded-lg">
-                    Chess.in
-                </div>
-
-                <div className="text-xl p-4  rounded-lg cursor-pointer ml-auto">
-                </div>
-            </div>
-
-            {/* Title */}
-            <div className="text-center mt-8 tracking-wide pb-7">
-                <h1 className="text-4xl font-bold ">Enter Your Email and a</h1>
-                <h1 className="text-4xl font-bold">Password</h1>
-            </div>
-
-            <div>
-                <Input
-                    src="/mail-svgrepo-com.svg"
-                    type="email"
-                    className="border border-gray-500 bg-stone-700 p-2 rounded w-[400px] py-3"
-                    placeholder="Email"
-                    value={email1}
-                    onChange={(e) => setEmail1(e.target.value)}
-                />
-            </div>
-            
-            <div className="py-2">
-                <Input
-                    src="/password-svgrepo-com.svg"
-                    type="password"
-                    className="border border-gray-500 bg-stone-700 p-2 rounded w-[400px] py-3"
-                    placeholder="Password"
-                    value={Password}
-                    onChange={(e) => setPassword(e.target.value)}
+        <div className="min-h-screen w-screen flex items-center justify-center bg-stone-900 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0 pointer-events-none select-none">
+                <div
+                    className="absolute inset-0 opacity-15"
+                    style={{
+                        background: "radial-gradient(ellipse at 40% 40%, #4ade80 0%, transparent 50%), radial-gradient(ellipse at 60% 60%, #a3e635 0%, transparent 50%)",
+                    }}
                 />
             </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col gap-6 w-[400px] py-5">
-                <Button
-                    className="bg-lime-600 text-xl font-bold py-4 rounded-xl w-full cursor-pointer"
-                    onClick={onclick}
+            {/* Form */}
+            <div className="relative z-10 w-full max-w-md mx-4">
+                {/* Logo */}
+                <div
+                    className="text-center mb-6 cursor-pointer"
+                    onClick={() => navigate("/")}
                 >
-                    Continue
-                </Button>
+                    <h1 className="text-4xl font-black text-white tracking-tight">
+                        ♟ Chess<span className="text-lime-400">.in</span>
+                    </h1>
+                </div>
 
-                {/* ✅ Success Message */}
-                {isLoggedIn && (
-                    <div className="text-green-400 text-lg font-medium text-center">
-                        Login successful!
+                {/* Title */}
+                <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-white">Create Your Account</h2>
+                    <p className="text-stone-400 mt-1">Enter your email and a password</p>
+                </div>
+
+                {/* Form card */}
+                <div className="bg-stone-800/80 backdrop-blur-sm border border-stone-700/40 p-8 rounded-2xl shadow-2xl">
+                    <div className="relative mb-4">
+                        <img
+                            src="/mail-svgrepo-com.svg"
+                            alt="Email"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50"
+                        />
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-11 pr-4 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
+                        />
                     </div>
-                )}
+
+                    <div className="relative mb-6">
+                        <img
+                            src="/password-svgrepo-com.svg"
+                            alt="Password"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50"
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                            className="w-full pl-11 pr-4 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleSubmit}
+                        disabled={status === "loading"}
+                        className={`w-full bg-lime-600 hover:bg-lime-500 p-3.5 rounded-xl text-lg font-bold cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-lime-600/25 active:scale-[0.98] ${status === "loading" ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
+                        {status === "loading" ? "Creating account..." : "Continue"}
+                    </button>
+
+                    {/* Status messages */}
+                    {status === "success" && (
+                        <div className="mt-4 text-center text-emerald-400 font-semibold">
+                            ✓ Account created! Redirecting...
+                        </div>
+                    )}
+                    {status === "error" && (
+                        <div className="mt-4 text-center text-red-400 text-sm">
+                            {errorMsg}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <p className="text-center text-stone-500 text-sm mt-6">
+                    Already have an account?{" "}
+                    <span
+                        onClick={() => navigate("/login")}
+                        className="text-lime-400 hover:text-lime-300 cursor-pointer font-semibold transition-colors"
+                    >
+                        Log In
+                    </span>
+                </p>
             </div>
         </div>
     );
