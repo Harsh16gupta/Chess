@@ -49,7 +49,11 @@ export default function Login() {
         <input className="w-full mb-4 p-3 bg-stone-700 rounded" placeholder="Username, Phone, or Email" />
         <input type="password" className="w-full mb-4 p-3  bg-stone-700 rounded" placeholder="Password" />
         <button className="w-full my-4 bg-radial-[at_50%_75%] from-lime-500 via-lime-500 to-lime-600 to-90% hover:bg-green-700 p-3 rounded   text-xl font-bold cursor-pointer">Log In</button>
-        <div className='my-8'>----------------------  OR -----------------------</div>
+        <div className="my-8 flex items-center gap-4">
+          <div className="flex-1 h-px bg-stone-600"></div>
+          <span className="text-stone-400 text-sm font-medium tracking-wider">OR</span>
+          <div className="flex-1 h-px bg-stone-600"></div>
+        </div>
         {/* Google Button */}
         <button
           onClick={() => login()}

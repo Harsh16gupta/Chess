@@ -64,6 +64,9 @@ export default function Game() {
 
   // Connection status
   const [status, setStatus] = useState<"connecting" | "open" | "closed">("connecting");
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
+  const toastTimeoutRef = useRef<number | null>(null);
+  const [showWinBanner, setShowWinBanner] = useState(false);
 
   // initialize guest name / username
   useEffect(() => {
@@ -229,6 +232,13 @@ export default function Game() {
     return () => socket.removeEventListener("message", handler);
   }, [socket, chess, myName, timeLeftMs.white, timeLeftMs.black]);
 
+  // Toast helper
+  const showToast = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
+    setToast({ message, type });
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3000);
+  };
+
   // Start matchmaking flow
   const startMatch = (nameOverride?: string) => {
     const name = EMAIL || nameOverride || myName;
@@ -238,7 +248,7 @@ export default function Game() {
     }
 
     if (!socket || (socket as any).readyState !== 1) {
-      alert("Socket not connected. Wait a moment and try again.");
+      showToast("Socket not connected. Wait a moment and try again.", "error");
       return;
     }
 
@@ -265,7 +275,7 @@ export default function Game() {
   const onSquareClick = (square: string) => {
     // Restrict move to correct player
     if (!myColor || myColor !== currentTurn) {
-      alert("It's not your turn!");
+      showToast("It's not your turn!", "error");
       return;
     }
 
@@ -284,7 +294,7 @@ export default function Game() {
     if (piece && piece.color === myColor[0]) {
       const moves = chess.moves({ square: sq, verbose: true });
       if (moves.length === 0) {
-        alert("No valid moves for this piece!");
+        showToast("No valid moves for this piece!", "error");
         return;
       }
       setSelectedSquare(sq);
@@ -295,7 +305,7 @@ export default function Game() {
       const move = chess.move({ from: selectedSquare, to: sq });
 
       if (!move) {
-        alert("Invalid move!");
+        showToast("Invalid move!", "error");
         return;
       }
 
@@ -306,24 +316,21 @@ export default function Game() {
 
       // Check/checkmate alerts
       if (chess.isCheckmate()) {
-        alert("Checkmate!");
+        showToast("Checkmate! 👑", "success");
         triggerWinAnimation();
       } else if (chess.inCheck()) {
-        alert("Check!");
+        showToast("Check! ⚠️", "info");
       }
     } else {
-      alert("Invalid square selection!");
+      showToast("Select one of your pieces first", "info");
       setSelectedSquare(null);
       setValidMoves([]);
     }
   };
   
   const triggerWinAnimation = () => {
-    const anim = document.createElement("div");
-    anim.className = "win-animation";
-    anim.innerText = "🏆 Victory! 🏆";
-    document.body.appendChild(anim);
-    setTimeout(() => anim.remove(), 3000);
+    setShowWinBanner(true);
+    setTimeout(() => setShowWinBanner(false), 3500);
   };
 
 
@@ -448,13 +455,17 @@ export default function Game() {
 
       {/* right side: chat appears only when game started */}
       <div className="flex flex-col bg-stone-900 m-4 rounded-md w-80">
-        <div className="flex justify-around pt-4 px-2 mb-4">
-          <Button onClick={() => {}} className="cursor-pointer text-sm">
-            Players
-          </Button>
-          <Button onClick={() => {}} className="cursor-pointer text-sm">
-            Settings
-          </Button>
+        <div className="flex flex-col items-center pt-4 px-4 mb-4 gap-2">
+          <div className="text-xl font-bold tracking-wide">♟ Chess.in</div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`w-2 h-2 rounded-full ${status === 'open' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`}></span>
+            <span className="text-gray-400">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
+          </div>
+          {started && (
+            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full ${isMyTurn ? 'bg-lime-600/30 text-lime-300' : 'bg-stone-700 text-gray-400'}`}>
+              {isMyTurn ? "Your turn" : "Opponent's turn"}
+            </div>
+          )}
         </div>
         {!started && !EMAIL && (
          <div className=" flex items-center justify-center ">
@@ -472,7 +483,7 @@ export default function Game() {
                 disabled={isMatching}
                 className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                {isMatching ? "Finding Opponent..." : "Play"}
+                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
               </Button>
 
             </div>
@@ -487,7 +498,7 @@ export default function Game() {
                 disabled={isMatching}
                 className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed w-xl bg-lime-500" : ""}`}
               >
-                {isMatching ? "Finding Opponent..." : "Play"}
+                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
               </Button>
 
             </div>
@@ -539,6 +550,46 @@ export default function Game() {
           </div>
         )}
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-xl shadow-2xl text-sm font-semibold backdrop-blur-md border ${
+            toast.type === 'error' ? 'bg-red-500/20 border-red-500/40 text-red-200' :
+            toast.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200' :
+            'bg-sky-500/20 border-sky-500/40 text-sky-200'
+          }`}
+          style={{ animation: 'toastSlideIn 0.3s ease-out', transform: 'translateX(-50%)' }}
+        >
+          {toast.message}
+        </div>
+      )}
+
+      {/* Win celebration banner */}
+      {showWinBanner && (
+        <div className="win-animation">
+          🏆 Victory! 🏆
+        </div>
+      )}
+
+      {/* Game over modal */}
+      {gameOverMessage && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40"
+          style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <div className="bg-stone-800 border border-stone-600/50 p-10 rounded-2xl text-center shadow-2xl min-w-[320px]"
+            style={{ animation: 'modalPop 0.35s ease-out' }}>
+            <div className="text-6xl mb-4">♚</div>
+            <div className="text-3xl font-bold mb-2">{gameOverMessage}</div>
+            <p className="text-gray-400 mb-8">Good game!</p>
+            <button
+              onClick={handlePlayAgain}
+              className="bg-lime-600 hover:bg-lime-500 text-white font-bold py-3 px-10 rounded-xl transition-colors duration-200 cursor-pointer text-lg shadow-lg shadow-lime-600/25"
+            >
+              Play Again
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
