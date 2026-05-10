@@ -135,6 +135,3 @@ The frontend currently has hardcoded URLs:
 - [ ] Spectator mode
 - [ ] Responsive mobile layout
 
-## License
-
-MIT
