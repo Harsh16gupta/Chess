@@ -8,8 +8,8 @@ const app = express();
 // ✅ Use JSON parser first
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true, // if you're using cookies/auth headers
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true,
 }));
 
 // ✅ Then your routes

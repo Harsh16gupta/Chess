@@ -16,7 +16,8 @@ export default function Email() {
         setStatus("loading");
 
         try {
-            const res = await axios.post('http://localhost:3000/api/auth/signup', {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await axios.post(`${apiUrl}/api/auth/signup`, {
                 email,
                 password,
             });
