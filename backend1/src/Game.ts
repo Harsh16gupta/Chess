@@ -1,7 +1,9 @@
 import { WebSocket } from "ws";
 import { Chess } from "chess.js";
 import { GAME_OVER, INIT_GAME, MOVE, CHAT_MESSAGE } from "./messages";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 type Color = "white" | "black";
 
 /**
@@ -225,6 +227,9 @@ export class Game {
     // Halt active timer loops to prevent dangling background intervals/timeouts
     this.clearActiveTimer();
 
+    // Persist the match records asynchronously to PostgreSQL and update player Elo ratings
+    this.persistGameAndElo(payload.result, payload.winner);
+
     const gameOverMessage = {
       type: GAME_OVER,
       payload: {
@@ -319,6 +324,70 @@ export class Game {
       }
     } catch (err) {
       // Swallowed: network transport issues do not deserve runtime crash overhead
+    }
+  }
+
+  /**
+   * Resolves registered users, calculates and saves updated Elo ratings,
+   * and persists game logs in PostgreSQL via Prisma.
+   */
+  private async persistGameAndElo(result: "checkmate" | "draw" | "timeout", winnerColor: Color | null) {
+    try {
+      // Query profile records from PostgreSQL.
+      // In matchmaking, registered users pass their email as their initial name payload.
+      const whiteUser = await prisma.user.findUnique({ where: { Email: this.name1 } });
+      const blackUser = await prisma.user.findUnique({ where: { Email: this.name2 } });
+
+      const whiteRating = whiteUser?.Rating ?? 1200;
+      const blackRating = blackUser?.Rating ?? 1200;
+
+      let scoreWhite = 0.5; // Draw
+      if (winnerColor === "white") scoreWhite = 1;
+      if (winnerColor === "black") scoreWhite = 0;
+
+      // Compute standard FIDE Elo delta
+      const expectedWhite = 1 / (1 + Math.pow(10, (blackRating - whiteRating) / 400));
+      const expectedBlack = 1 / (1 + Math.pow(10, (whiteRating - blackRating) / 400));
+      const scoreBlack = 1 - scoreWhite;
+
+      const kFactor = 32;
+      const newWhiteRating = Math.round(whiteRating + kFactor * (scoreWhite - expectedWhite));
+      const newBlackRating = Math.round(blackRating + kFactor * (scoreBlack - expectedBlack));
+
+      let winnerId: number | null = null;
+      if (winnerColor === "white" && whiteUser) winnerId = whiteUser.id;
+      if (winnerColor === "black" && blackUser) winnerId = blackUser.id;
+
+      // Extract space-separated SAN moves array
+      const pgn = this.board.history().join(" ");
+
+      // 1. Persist the game history log
+      await prisma.game.create({
+        data: {
+          whitePlayerId: whiteUser ? whiteUser.id : null,
+          blackPlayerId: blackUser ? blackUser.id : null,
+          winnerId,
+          result,
+          pgn,
+        },
+      });
+
+      // 2. Persist updated Elo ratings for registered profiles
+      if (whiteUser) {
+        await prisma.user.update({
+          where: { id: whiteUser.id },
+          data: { Rating: newWhiteRating },
+        });
+      }
+
+      if (blackUser) {
+        await prisma.user.update({
+          where: { id: blackUser.id },
+          data: { Rating: newBlackRating },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to persist game history or process Elo updates:", err);
     }
   }
 }

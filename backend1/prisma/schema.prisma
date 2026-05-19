@@ -2,18 +2,32 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User{
+model User {
     id            Int       @id @default(autoincrement())
-    Email         String        @unique  
+    Email         String    @unique  
     Password      String
-    Rating        Int?       @default(1200)
+    Rating        Int?      @default(1200)
     
+    // Relations to Game histories
+    whiteGames    Game[]    @relation("WhiteGames")
+    blackGames    Game[]    @relation("BlackGames")
+    wonGames      Game[]    @relation("WonGames")
+}
 
+model Game {
+    id            String    @id @default(uuid())
+    whitePlayerId Int?      // Nullable for Guest players
+    blackPlayerId Int?      // Nullable for Guest players
+    whitePlayer   User?     @relation("WhiteGames", fields: [whitePlayerId], references: [id])
+    blackPlayer   User?     @relation("BlackGames", fields: [blackPlayerId], references: [id])
+    winnerId      Int?      // Nullable if the match ends in a draw
+    winner        User?     @relation("WonGames", fields: [winnerId], references: [id])
+    result        String    // "checkmate" | "draw" | "timeout"
+    pgn           String    // Space-separated list of moves (e.g. "e4 e5 Nf3 Nc6")
+    createdAt     DateTime  @default(now())
 }

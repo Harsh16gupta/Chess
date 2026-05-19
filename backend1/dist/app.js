@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const auth_route_1 = __importDefault(require("./routes/auth.route"));
+const game_route_1 = __importDefault(require("./routes/game.route"));
 const errorhandler_1 = require("./middlewares/errorhandler");
 const app = (0, express_1.default)();
 // ─── MIDDLEWARE SETUP ─────────────────────────────────────────
@@ -19,6 +20,7 @@ app.use((0, cors_1.default)({
 }));
 // ─── API ROUTES ───────────────────────────────────────────────
 app.use('/api/auth', auth_route_1.default);
+app.use('/api/games', game_route_1.default);
 // Static health check endpoint to verify HTTP layer availability
 app.get('/', (req, res) => res.send('Hello from Express + TypeScript'));
 // ─── ERROR HANDLING ───────────────────────────────────────────

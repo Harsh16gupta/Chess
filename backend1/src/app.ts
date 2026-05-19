@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import router from './routes/auth.route';
+import authRouter from './routes/auth.route';
+import gameRouter from './routes/game.route';
 import { errorHandler } from './middlewares/errorhandler'; 
 
 const app = express();
@@ -17,7 +18,8 @@ app.use(cors({
 }));
 
 // ─── API ROUTES ───────────────────────────────────────────────
-app.use('/api/auth', router);
+app.use('/api/auth', authRouter);
+app.use('/api/games', gameRouter);
 
 // Static health check endpoint to verify HTTP layer availability
 app.get('/', (req, res) => res.send('Hello from Express + TypeScript'));
