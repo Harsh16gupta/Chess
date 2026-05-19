@@ -1,62 +1,83 @@
-import { useNavigate, useLocation } from "react-router-dom"
-import { Button } from "./Button"
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "./Button";
 
 export const SideBar = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
-    return(
-        <div className="flex flex-col justify-between w-48 bg-stone-900 text-white py-4 border-r border-stone-700/50 shrink-0">
-            <div className="flex flex-col gap-1">
-                <Button 
-                    className="flex justify-center items-center font-bold text-2xl p-3 cursor-pointer hover:text-lime-400 transition-colors duration-200" 
-                    onClick={() => navigate("/")}>
-                    <div>♟ Chess.in</div>
-                </Button>
-                
-                <div className="px-2 mt-4 flex flex-col gap-0.5">
-                    <Button 
-                        className={`w-full flex justify-start items-center font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/game") ? "bg-lime-600/20 text-lime-400" : "hover:bg-stone-700/60"}`}
-                        onClick={() => navigate("/game")}>
-                        <div>▶ Play</div>
-                    </Button>
-                    <Button 
-                        className={`w-full flex justify-start items-center font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/puzzle") ? "bg-lime-600/20 text-lime-400" : "hover:bg-stone-700/60"}`}
-                        onClick={() => navigate("/puzzle")}>
-                        <div>🧩 Puzzles</div>
-                    </Button>
-                    <Button 
-                        className={`w-full flex justify-start items-center font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/learn") ? "bg-lime-600/20 text-lime-400" : "hover:bg-stone-700/60"}`}
-                        onClick={() => navigate("/learn")}>
-                        <div>📘 Learn</div>
-                    </Button>
-                    <Button 
-                        className={`w-full flex justify-start items-center font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 hover:bg-stone-700/60`}
-                        onClick={() => navigate("/game")}>
-                        <div>👁 Watch</div>
-                    </Button>
-                    <Button 
-                        className={`w-full flex justify-start items-center font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 hover:bg-stone-700/60`}
-                        onClick={() => navigate("/game")}>
-                        <div>⋯ More</div>
-                    </Button>
-                </div>
-            </div>
-            
-            <div className="px-2 flex flex-col gap-2">
-                <Button 
-                    className="w-full flex justify-center items-center font-bold text-lg py-2.5 bg-lime-600 hover:bg-lime-500 rounded-lg cursor-pointer transition-colors duration-200" 
-                    onClick={() => navigate("/signup")}>
-                    <div>Sign Up</div>
-                </Button>
-                <Button 
-                    className="w-full flex justify-center items-center font-bold text-lg py-2.5 bg-stone-700 hover:bg-stone-600 rounded-lg cursor-pointer transition-colors duration-200" 
-                    onClick={() => navigate("/login")}>
-                    <div>Log In</div>
-                </Button>
-            </div>
+  return (
+    <div className="flex flex-col justify-between w-52 bg-zinc-950 text-white py-6 border-r border-zinc-900 shrink-0 font-sans">
+      <div className="flex flex-col gap-1">
+        {/* Minimalist Logo */}
+        <Button
+          className="flex items-center gap-2 px-6 py-2 text-xl font-bold tracking-tight text-white hover:opacity-85 transition-opacity cursor-pointer justify-start"
+          onClick={() => navigate("/")}
+        >
+          <span>♟</span> <span>chess.in</span>
+        </Button>
+
+        {/* Navigation Items */}
+        <div className="px-3 mt-8 flex flex-col gap-1">
+          <Button
+            className={`w-full flex justify-start items-center gap-3 font-semibold text-sm py-2.5 px-4 cursor-pointer rounded-full transition-all duration-200 ${
+              isActive("/game") ? "bg-zinc-900 text-white" : "text-zinc-500 hover:text-zinc-200"
+            }`}
+            onClick={() => navigate("/game")}
+          >
+            <span>▶</span> <span>Play</span>
+          </Button>
+
+          <Button
+            className={`w-full flex justify-start items-center gap-3 font-semibold text-sm py-2.5 px-4 cursor-pointer rounded-full transition-all duration-200 ${
+              isActive("/puzzle") ? "bg-zinc-900 text-white" : "text-zinc-500 hover:text-zinc-200"
+            }`}
+            onClick={() => navigate("/game")}
+          >
+            <span>🧩</span> <span>Puzzles</span>
+          </Button>
+
+          <Button
+            className={`w-full flex justify-start items-center gap-3 font-semibold text-sm py-2.5 px-4 cursor-pointer rounded-full transition-all duration-200 ${
+              isActive("/learn") ? "bg-zinc-900 text-white" : "text-zinc-500 hover:text-zinc-200"
+            }`}
+            onClick={() => navigate("/game")}
+          >
+            <span>📘</span> <span>Learn</span>
+          </Button>
+
+          <Button
+            className="w-full flex justify-start items-center gap-3 font-semibold text-sm py-2.5 px-4 cursor-pointer rounded-full text-zinc-500 hover:text-zinc-200 transition-all duration-200"
+            onClick={() => navigate("/game")}
+          >
+            <span>👁</span> <span>Watch</span>
+          </Button>
+
+          <Button
+            className="w-full flex justify-start items-center gap-3 font-semibold text-sm py-2.5 px-4 cursor-pointer rounded-full text-zinc-500 hover:text-zinc-200 transition-all duration-200"
+            onClick={() => navigate("/game")}
+          >
+            <span>⋯</span> <span>More</span>
+          </Button>
         </div>
-    )
-}
+      </div>
+
+      {/* Account actions */}
+      <div className="px-4 flex flex-col gap-2">
+        <Button
+          className="w-full flex justify-center items-center font-semibold text-sm py-2.5 bg-white text-zinc-950 rounded-full cursor-pointer hover:bg-zinc-100 transition-colors duration-200"
+          onClick={() => navigate("/signup")}
+        >
+          Sign Up
+        </Button>
+        <Button
+          className="w-full flex justify-center items-center font-semibold text-sm py-2.5 bg-zinc-900 border border-zinc-800 text-white rounded-full cursor-pointer hover:bg-zinc-800 transition-colors duration-200"
+          onClick={() => navigate("/login")}
+        >
+          Log In
+        </Button>
+      </div>
+    </div>
+  );
+};

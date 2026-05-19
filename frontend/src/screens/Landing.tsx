@@ -5,84 +5,70 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-zinc-950 text-white font-sans antialiased overflow-hidden">
+      {/* Sidebar Navigation */}
       <SideBar />
 
-      <div className="flex-1 relative overflow-hidden bg-stone-900">
-        {/* Animated gradient background */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: "radial-gradient(ellipse at 30% 20%, #4ade80 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, #a3e635 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, #1c1917 0%, #0c0a09 100%)",
-          }}
-        />
+      {/* Main Content Pane */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 md:px-12 relative">
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16 items-center">
+          
+          {/* Left Hero Column: Minimalist typography and CTA */}
+          <div className="md:col-span-7 flex flex-col items-center md:items-start text-center md:text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              Play Chess.<br />
+              <span className="text-zinc-400">Pure & simple.</span>
+            </h1>
+            <p className="mt-4 text-zinc-400 text-base md:text-lg max-w-sm font-normal leading-relaxed">
+              Experience clean, real-time multiplayer chess. No ads, no noise—just pure focus.
+            </p>
 
-        {/* Floating chess pieces (decorative) */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-          <span className="absolute text-7xl opacity-[0.04] top-[10%] left-[10%] rotate-[-15deg]">♜</span>
-          <span className="absolute text-9xl opacity-[0.04] top-[60%] left-[5%] rotate-[20deg]">♞</span>
-          <span className="absolute text-8xl opacity-[0.04] top-[20%] right-[8%] rotate-[10deg]">♝</span>
-          <span className="absolute text-6xl opacity-[0.04] bottom-[15%] right-[15%] rotate-[-25deg]">♛</span>
-          <span className="absolute text-7xl opacity-[0.04] bottom-[30%] left-[30%] rotate-[5deg]">♚</span>
-        </div>
-
-        {/* Main content */}
-        <div className="relative z-10 flex h-full items-center justify-center px-8">
-          <div className="flex flex-col md:flex-row items-center gap-12 max-w-5xl">
-            {/* Left: Board image */}
-            <div className="flex-shrink-0">
-              <img
-                className="w-80 md:w-96 rounded-2xl shadow-2xl shadow-black/50"
-                src="/board.png"
-                alt="Chess Board"
-              />
-            </div>
-
-            {/* Right: Text + CTA */}
-            <div className="flex flex-col items-center md:items-start text-center md:text-left">
-              <h1 className="text-5xl md:text-6xl font-black text-white leading-tight tracking-tight">
-                Play Chess
-                <br />
-                <span className="bg-gradient-to-r from-lime-400 to-emerald-400 bg-clip-text text-transparent">
-                  Online
-                </span>
-              </h1>
-              <p className="mt-4 text-lg text-stone-400 max-w-md">
-                Real-time multiplayer chess. Find an opponent instantly,
-                challenge a friend, or improve with puzzles.
-              </p>
-
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 onClick={() => navigate("/game")}
-                className="mt-8 group relative bg-lime-600 hover:bg-lime-500 text-white font-bold text-xl py-4 px-12 rounded-2xl cursor-pointer transition-all duration-300 shadow-lg shadow-lime-600/30 hover:shadow-lime-500/40 hover:scale-[1.03] active:scale-[0.98]"
+                className="bg-white hover:bg-zinc-100 text-zinc-950 font-semibold px-8 py-3.5 rounded-full transition-colors duration-250 text-base cursor-pointer shadow-sm text-center"
               >
-                <span className="flex items-center gap-3">
-                  ▶ Play Online
-                </span>
-                <span className="block text-sm font-normal mt-0.5 opacity-70">
-                  Play with someone at your level
-                </span>
+                Play Online
               </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-semibold px-8 py-3.5 rounded-full transition-colors duration-250 text-base cursor-pointer text-center"
+              >
+                Log In
+              </button>
+            </div>
 
-              {/* Stats row */}
-              <div className="mt-10 flex gap-8 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-white">5 min</div>
-                  <div className="text-xs text-stone-500 uppercase tracking-wider">Timed Games</div>
-                </div>
-                <div className="w-px bg-stone-700" />
-                <div>
-                  <div className="text-2xl font-bold text-white">Live</div>
-                  <div className="text-xs text-stone-500 uppercase tracking-wider">In-Game Chat</div>
-                </div>
-                <div className="w-px bg-stone-700" />
-                <div>
-                  <div className="text-2xl font-bold text-white">Free</div>
-                  <div className="text-xs text-stone-500 uppercase tracking-wider">No Account Needed</div>
-                </div>
+            {/* Micro details stats row */}
+            <div className="mt-12 pt-8 border-t border-zinc-900 flex gap-10 text-left w-full justify-center md:justify-start">
+              <div>
+                <span className="text-xl font-bold tracking-tight text-white block">5 Min</span>
+                <span className="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-0.5 block">Lobby Clock</span>
+              </div>
+              <div className="w-px bg-zinc-900" />
+              <div>
+                <span className="text-xl font-bold tracking-tight text-white block">Live</span>
+                <span className="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-0.5 block">Match Chat</span>
+              </div>
+              <div className="w-px bg-zinc-900" />
+              <div>
+                <span className="text-xl font-bold tracking-tight text-white block">Free</span>
+                <span className="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-0.5 block">No Accounts Req</span>
               </div>
             </div>
           </div>
+
+          {/* Right Column: Clean board preview */}
+          <div className="md:col-span-5 flex justify-center">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-b from-zinc-800 to-zinc-950 rounded-2xl opacity-20 blur-md transition-opacity duration-300"></div>
+              <img
+                className="relative w-72 md:w-80 rounded-2xl border border-zinc-800/80 shadow-2xl shadow-black/80"
+                src="/board.png"
+                alt="Chess.in Chess Board"
+              />
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
