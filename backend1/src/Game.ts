@@ -18,6 +18,7 @@ export class Game {
   private lastMoveTime: number; // Unix timestamp of the last validated move, used for clock math
   public timeLeft: { white: number; black: number }; // In-game timers represented in milliseconds
   private ended: boolean = false; // Flag to prevent duplicate game-over triggers or moves after game ends
+  private timer: NodeJS.Timeout | null = null; // Active background timeout for resolving flag falls (timeouts)
 
   constructor(
     player1: WebSocket,
@@ -55,6 +56,9 @@ export class Game {
         timeLeft: this.timeLeft.black,
       },
     });
+
+    // Start active background tracking for White's first turn
+    this.startActiveTimer();
   }
 
   // --- Public API ---
@@ -69,6 +73,9 @@ export class Game {
     // If the game has already concluded, ignore any subsequent incoming moves
     if (this.ended) return;
 
+    // Clear active timeout checker as a move is currently being processed
+    this.clearActiveTimer();
+
     const holderOfWhite = this.player1;
     const holderOfBlack = this.player2;
     const turnBeforeMove: Color = this.board.turn() === "w" ? "white" : "black";
@@ -82,6 +89,8 @@ export class Game {
         type: MOVE,
         payload: { ok: false, reason: "not_your_turn" },
       });
+      // Resume the active timer for the current turn player
+      this.startActiveTimer();
       return;
     }
 
@@ -97,6 +106,8 @@ export class Game {
         type: MOVE,
         payload: { ok: false, reason: "illegal_move", move },
       });
+      // Resume the active timer for the current turn player
+      this.startActiveTimer();
       return;
     }
 
@@ -173,6 +184,9 @@ export class Game {
       });
       return;
     }
+
+    // Move committed successfully. Begin active clock tracking for the next turn player.
+    this.startActiveTimer();
   }
 
   /**
@@ -208,6 +222,9 @@ export class Game {
     if (this.ended) return;
     this.ended = true;
 
+    // Halt active timer loops to prevent dangling background intervals/timeouts
+    this.clearActiveTimer();
+
     const gameOverMessage = {
       type: GAME_OVER,
       payload: {
@@ -230,6 +247,65 @@ export class Game {
   private sendToBoth(payload: any) {
     this.safeSend(this.player1, payload);
     this.safeSend(this.player2, payload);
+  }
+
+  // --- Active Clock Schedulers ---
+
+  /**
+   * Computes remaining turn time and schedules a single precise timeout for clock expiry.
+   * This provides exact active timeout resolution without expensive periodic high-frequency polling.
+   */
+  private startActiveTimer() {
+    this.clearActiveTimer();
+    if (this.ended) return;
+
+    const turn: Color = this.board.turn() === "w" ? "white" : "black";
+    const timeLeft = this.timeLeft[turn];
+
+    // Schedule timeout execution at the precise millisecond the player's clock drops to zero.
+    // Plus a micro 150ms buffer to compensate for TCP transmission delay/jitters.
+    this.timer = setTimeout(() => {
+      this.handleTimeout();
+    }, timeLeft + 150);
+  }
+
+  /**
+   * Resets active timeout handles safely.
+   */
+  private clearActiveTimer() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+  }
+
+  /**
+   * Executed when the allocated time limit runs out. Recalculates elapsed times
+   * and triggers the flag fall (loss by timeout) if the clock truly fell below zero.
+   */
+  private handleTimeout() {
+    if (this.ended) return;
+
+    const turn: Color = this.board.turn() === "w" ? "white" : "black";
+    const now = Date.now();
+    const elapsed = now - this.lastMoveTime;
+
+    this.timeLeft[turn] = Math.max(0, this.timeLeft[turn] - elapsed);
+    this.lastMoveTime = now;
+
+    if (this.timeLeft[turn] <= 0) {
+      const winner: Color = turn === "white" ? "black" : "white";
+      const winnerName = winner === "white" ? this.name1 : this.name2;
+      this.endGame({
+        result: "timeout",
+        winner,
+        winnerName,
+        reason: `${turn}_flag_fall`,
+      });
+    } else {
+      // If latency / CPU drift left time on the clock, reschedule the remainder
+      this.startActiveTimer();
+    }
   }
 
   /**
