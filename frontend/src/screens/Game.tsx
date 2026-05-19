@@ -333,39 +333,47 @@ export default function Game() {
   const isMyTurn = myColor === currentTurn;
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 text-white font-sans antialiased">
+    <div className="flex h-screen w-screen bg-zinc-950 text-white font-sans antialiased overflow-hidden select-none">
       {!user ? <SideBar /> : <LoginSidebar />}
       
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10 relative">
-        <div className="flex flex-col items-center gap-4">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
+        <div className="flex flex-col items-center gap-3">
           
           {/* Opponent Card (Black) */}
           <div
-            className={`w-full p-4 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
+            className={`p-3 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
               currentTurn === "black" 
-                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/30" 
-                : "bg-zinc-900/20 border-zinc-900 opacity-60"
+                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/20" 
+                : "bg-zinc-900/10 border-zinc-900/50 opacity-55"
             }`}
-            style={{ width: "85vmin", maxWidth: 720 }}
+            style={{ width: "min(70vh, calc(100vw - 620px))" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-[10px] uppercase">
                 {players.black?.slice(0, 2) || "BL"}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-white tracking-tight">{players.black || "Waiting..."}</span>
-                <span className="text-[10px] text-zinc-500 font-semibold tracking-widest uppercase">Black</span>
+                <span className="text-xs font-semibold text-white tracking-tight truncate max-w-[160px]">
+                  {players.black?.split("@")[0] || "Waiting..."}
+                </span>
+                <span className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase">Black</span>
               </div>
             </div>
-            <div className={`text-base font-mono font-bold px-3 py-1 rounded bg-zinc-950/80 border border-zinc-800 tracking-wider ${
-              currentTurn === "black" ? "text-white" : "text-zinc-600"
+            <div className={`text-sm font-mono font-bold px-2.5 py-0.5 rounded-lg bg-zinc-950/80 border border-zinc-800 tracking-wider ${
+              currentTurn === "black" ? "text-white border-zinc-700" : "text-zinc-600"
             }`}>
               {formatTime(blackSeconds)}
             </div>
           </div>
 
           {/* Chessboard container */}
-          <div className="relative shadow-2xl rounded-2xl overflow-hidden border border-zinc-900" style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
+          <div 
+            className="relative shadow-2xl rounded-2xl overflow-hidden border border-zinc-900" 
+            style={{ 
+              width: "min(70vh, calc(100vw - 620px))", 
+              height: "min(70vh, calc(100vw - 620px))" 
+            }}
+          >
             <ChessBoard
               board={board}
               flipped={myColor === "black"}
@@ -378,24 +386,26 @@ export default function Game() {
 
           {/* Self Card (White) */}
           <div
-            className={`w-full p-4 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
+            className={`p-3 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
               currentTurn === "white" 
-                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/30" 
-                : "bg-zinc-900/20 border-zinc-900 opacity-60"
+                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/20" 
+                : "bg-zinc-900/10 border-zinc-900/50 opacity-55"
             }`}
-            style={{ width: "85vmin", maxWidth: 720 }}
+            style={{ width: "min(70vh, calc(100vw - 620px))" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-[10px] uppercase">
                 {players.white?.slice(0, 2) || "WH"}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-white tracking-tight">{players.white || "Waiting..."}</span>
-                <span className="text-[10px] text-zinc-500 font-semibold tracking-widest uppercase">White</span>
+                <span className="text-xs font-semibold text-white tracking-tight truncate max-w-[160px]">
+                  {players.white?.split("@")[0] || "Waiting..."}
+                </span>
+                <span className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase">White</span>
               </div>
             </div>
-            <div className={`text-base font-mono font-bold px-3 py-1 rounded bg-zinc-950/80 border border-zinc-800 tracking-wider ${
-              currentTurn === "white" ? "text-white" : "text-zinc-600"
+            <div className={`text-sm font-mono font-bold px-2.5 py-0.5 rounded-lg bg-zinc-950/80 border border-zinc-800 tracking-wider ${
+              currentTurn === "white" ? "text-white border-zinc-700" : "text-zinc-600"
             }`}>
               {formatTime(whiteSeconds)}
             </div>
