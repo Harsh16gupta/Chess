@@ -1,19 +1,35 @@
 import dotenv from 'dotenv';
-import app from './app';
 dotenv.config();
-const PORT = process.env.PORT || 3000;
-console.log(PORT);
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
 
+import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import app from './app';
 import { GameManager } from './GameManager';
-const wss = new WebSocketServer({ port: 8080 });
 
+const PORT = process.env.PORT || 3000;
+
+/**
+ * Express app & WebSockets are bound to a single HTTP Server instance.
+ * This simplifies deployment on Cloud providers (like Render or Fly.io) 
+ * by bypassing multi-port routing restrictions.
+ */
+const server = createServer(app);
+
+/**
+ * Instantiate WebSocketServer on top of our existing HTTP server.
+ * The 'ws' library automatically listens for HTTP 'Upgrade' requests (WSS handshake).
+ */
+const wss = new WebSocketServer({ server });
 const gameManager = new GameManager();
 
-wss.on('connection', function connection(ws) {
-    gameManager.addUser(ws);
-    ws.on("close", () => gameManager.removeUser(ws));
+wss.on('connection', (ws) => {
+  // Delegate socket management and routing to the global GameManager
+  gameManager.addUser(ws);
+  
+  // Clean up references when client session disconnects
+  ws.on('close', () => gameManager.removeUser(ws));
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} (HTTP + WebSocket)`);
 });
