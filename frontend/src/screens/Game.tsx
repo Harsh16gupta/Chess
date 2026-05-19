@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../components/Button";
 import { ChessBoard } from "../components/ChessBoard";
 import { SideBar } from "../components/SideBar";
 import { useSocket } from "../hooks/useSockets";
@@ -29,12 +28,11 @@ function genGuestName() {
 
 export default function Game() {
   const { user } = useAuth();
-  const socket = useSocket(); // WebSocket | null
+  const socket = useSocket();
   const [chess] = useState(() => new Chess());
   const [board, setBoard] = useState(chess.board());
   const [isMatching, setIsMatching] = useState(false);
 
-  // Player & game state
   const [myName, setMyName] = useState<string | null>(null);
   const [tempName, setTempName] = useState("");
   const [myColor, setMyColor] = useState<"white" | "black" | null>(null);
@@ -46,7 +44,6 @@ export default function Game() {
   const [started, setStarted] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
 
-  // Timers (ms)
   const [timeLeftMs, setTimeLeftMs] = useState<{ white: number; black: number }>({
     white: 5 * 60 * 1000,
     black: 5 * 60 * 1000,
@@ -54,7 +51,6 @@ export default function Game() {
   const lastSyncRef = useRef(Date.now());
   const tickRef = useRef<number | null>(null);
 
-  // Chat (hidden until game starts)
   const [chatMessages, setChatMessages] = useState<{ sender: string; message: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
 
@@ -62,14 +58,11 @@ export default function Game() {
   const [validMoves, setValidMoves] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
 
-
-  // Connection status
   const [status, setStatus] = useState<"connecting" | "open" | "closed">("connecting");
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
   const [showWinBanner, setShowWinBanner] = useState(false);
 
-  // initialize guest name / username
   useEffect(() => {
     if (user?.email) {
       setMyName(user.email);
@@ -77,13 +70,8 @@ export default function Game() {
     }
     const stored = localStorage.getItem("guestName");
     if (stored) setMyName(stored);
-    else {
-      // delay opening modal until user tries to play (so modal doesn't annoy)
-      setMyName(null);
-    }
   }, [user?.email]);
 
-  // connection state tracking
   useEffect(() => {
     if (!socket) {
       setStatus("connecting");
@@ -100,7 +88,6 @@ export default function Game() {
     };
   }, [socket]);
 
-  // local ticking (1s) only when game started
   useEffect(() => {
     if (!started) {
       if (tickRef.current) {
@@ -121,7 +108,6 @@ export default function Game() {
         if (currentTurn === "white") updated.white = Math.max(0, prev.white - elapsed);
         else updated.black = Math.max(0, prev.black - elapsed);
 
-        // Detect timeout inside the callback (always has fresh values)
         if (updated.white <= 0 && prev.white > 0) {
           setTimeout(() => {
             setStarted(false);
@@ -145,9 +131,8 @@ export default function Game() {
         tickRef.current = null;
       }
     };
-  }, [ started, currentTurn]);
+  }, [started, currentTurn, players.black, players.white]);
 
-  // handle messages from server
   useEffect(() => {
     if (!socket) return;
     const handler = (e: MessageEvent) => {
@@ -167,7 +152,6 @@ export default function Game() {
         }
         case INIT_GAME: {
           const p = message.payload;
-          // server should send: color, name, opponent, timeLeft {white, black} (ms), board (fen) optional
           setMyColor(p.color);
           const whiteName = p.color === "white" ? (myName ?? p.name) : p.opponent;
           const blackName = p.color === "black" ? (myName ?? p.name) : p.opponent;
@@ -188,13 +172,11 @@ export default function Game() {
           setCurrentTurn(p.turn ?? (chess.turn() === "w" ? "white" : "black"));
           setStarted(true);
           setGameOverMessage(null);
-          // show chat only after game starts — the chat rendering is conditional below
-          setIsMatching(false);  // stop matching animation here
+          setIsMatching(false);
           break;
         }
         case MOVE: {
           const p = message.payload;
-          // prefer server FEN
           if (p.board) {
             try {
               chess.load(p.board);
@@ -236,28 +218,22 @@ export default function Game() {
     return () => socket.removeEventListener("message", handler);
   }, [socket, chess, myName, timeLeftMs.white, timeLeftMs.black]);
 
-  // Toast helper
   const showToast = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     setToast({ message, type });
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3000);
   };
 
-  // Start matchmaking flow
   const startMatch = (nameOverride?: string) => {
     const name = user?.email || nameOverride || myName;
-    if (!name) {
-      return;
-    }
+    if (!name) return;
 
     if (!socket || (socket as any).readyState !== 1) {
       showToast("Socket not connected. Wait a moment and try again.", "error");
       return;
     }
 
-    // set matching state true
     setIsMatching(true);
-
     if (!user?.email) localStorage.setItem("guestName", name);
 
     socket.send(
@@ -268,10 +244,7 @@ export default function Game() {
     );
   };
 
-
-  // Called when the user clicks a square on the board
   const onSquareClick = (square: string) => {
-    // Restrict move to correct player
     if (!myColor || myColor !== currentTurn) {
       showToast("It's not your turn!", "error");
       return;
@@ -279,7 +252,6 @@ export default function Game() {
 
     const sq = square as Square;
 
-    // Select/deselect piece
     if (selectedSquare === sq) {
       setSelectedSquare(null);
       setValidMoves([]);
@@ -288,7 +260,6 @@ export default function Game() {
 
     const piece = chess.get(sq);
 
-    // Selecting a piece
     if (piece && piece.color === myColor[0]) {
       const moves = chess.moves({ square: sq, verbose: true });
       if (moves.length === 0) {
@@ -298,7 +269,6 @@ export default function Game() {
       setSelectedSquare(sq);
       setValidMoves(moves.map((m) => m.to));
     } 
-    // Making a move
     else if (selectedSquare && validMoves.includes(sq)) {
       const move = chess.move({ from: selectedSquare, to: sq });
 
@@ -307,7 +277,6 @@ export default function Game() {
         return;
       }
 
-      // Send move to server
       if (socket && (socket as any).readyState === 1) {
         socket.send(JSON.stringify({ type: MOVE, payload: { move: { from: selectedSquare, to: sq } } }));
       }
@@ -315,7 +284,6 @@ export default function Game() {
       setSelectedSquare(null);
       setValidMoves([]);
 
-      // Check/checkmate alerts
       if (chess.isCheckmate()) {
         showToast("Checkmate! 👑", "success");
         triggerWinAnimation();
@@ -334,13 +302,10 @@ export default function Game() {
     setTimeout(() => setShowWinBanner(false), 3500);
   };
 
-
-  // Chat send
   const sendChat = () => {
     const text = chatInput.trim();
     if (!text || !socket || (socket as any).readyState !== 1) return;
 
-    // Send to backend
     socket.send(JSON.stringify({
       type: CHAT_MESSAGE,
       payload: { text }
@@ -349,18 +314,13 @@ export default function Game() {
     setChatInput("");
   };
 
-
-
-  // Guest modal submit
   const submitGuestName = () => {
     const name = tempName.trim() || genGuestName();
     localStorage.setItem("guestName", name);
     setMyName(name);
-    // Immediately start the match with provided name
     startMatch(name);
   };
 
-  // Play again
   const handlePlayAgain = () => {
     chess.reset();
     setBoard(chess.board());
@@ -368,46 +328,44 @@ export default function Game() {
     startMatch();
   };
 
-  // Derived UI
   const whiteSeconds = Math.max(0, Math.floor(timeLeftMs.white / 1000));
   const blackSeconds = Math.max(0, Math.floor(timeLeftMs.black / 1000));
   const isMyTurn = myColor === currentTurn;
 
-  // Board size class: smaller (85vmin) so top & bottom bars fit
-  // Player bars above and below board are fixed-height so both names show
   return (
-    <div className="flex h-screen w-screen bg-stone-800 text-white">
+    <div className="flex h-screen w-screen bg-zinc-950 text-white font-sans antialiased">
       {!user ? <SideBar /> : <LoginSidebar />}
       
-
-      <div className="flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative">
-        
-
-        {/* center game area */}
-        <div className="flex flex-col items-center ">
-          {/* top player bar */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10 relative">
+        <div className="flex flex-col items-center gap-4">
+          
+          {/* Opponent Card (Black) */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-t-xl flex items-center justify-between ${
-              currentTurn === "black" ? "bg-yellow-700" : "bg-stone-700"
+            className={`w-full p-4 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
+              currentTurn === "black" 
+                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/30" 
+                : "bg-zinc-900/20 border-zinc-900 opacity-60"
             }`}
-            style={{ height: 48 }}
+            style={{ width: "85vmin", maxWidth: 720 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
-                {players.black?.slice(0, 2).toUpperCase() || "BL"}
+              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+                {players.black?.slice(0, 2) || "BL"}
               </div>
               <div className="flex flex-col">
-                <div className="text-sm">{players.black || "Waiting..."}</div>
-                <div className="text-xs text-gray-200">Black</div>
+                <span className="text-sm font-semibold text-white tracking-tight">{players.black || "Waiting..."}</span>
+                <span className="text-[10px] text-zinc-500 font-semibold tracking-widest uppercase">Black</span>
               </div>
             </div>
-            <div className={`text-lg font-bold ${blackSeconds < 10 ? "text-red-400" : ""}`}>
+            <div className={`text-base font-mono font-bold px-3 py-1 rounded bg-zinc-950/80 border border-zinc-800 tracking-wider ${
+              currentTurn === "black" ? "text-white" : "text-zinc-600"
+            }`}>
               {formatTime(blackSeconds)}
             </div>
           </div>
 
-          {/* board container (smaller so both bars visible) */}
-          <div className=" " style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
+          {/* Chessboard container */}
+          <div className="relative shadow-2xl rounded-2xl overflow-hidden border border-zinc-900" style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
             <ChessBoard
               board={board}
               flipped={myColor === "black"}
@@ -416,139 +374,164 @@ export default function Game() {
               lastMove={lastMove}
               onSquareClick={onSquareClick}
             />
-
           </div>
 
-          {/* bottom player bar */}
+          {/* Self Card (White) */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-b-xl flex items-center justify-between ${
-              currentTurn === "white" ? "bg-yellow-700" : "bg-stone-700"
+            className={`w-full p-4 border rounded-2xl flex items-center justify-between transition-all duration-300 ${
+              currentTurn === "white" 
+                ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-black/30" 
+                : "bg-zinc-900/20 border-zinc-900 opacity-60"
             }`}
-            style={{ height: 48 }}
+            style={{ width: "85vmin", maxWidth: 720 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
-                {players.white?.slice(0, 2).toUpperCase() || "WH"}
+              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+                {players.white?.slice(0, 2) || "WH"}
               </div>
               <div className="flex flex-col">
-                <div className="text-sm">{players.white || "Waiting..."}</div>
-                <div className="text-xs text-gray-200">White</div>
+                <span className="text-sm font-semibold text-white tracking-tight">{players.white || "Waiting..."}</span>
+                <span className="text-[10px] text-zinc-500 font-semibold tracking-widest uppercase">White</span>
               </div>
             </div>
-            <div className={`text-lg font-bold ${whiteSeconds < 10 ? "text-red-400" : ""}`}>
+            <div className={`text-base font-mono font-bold px-3 py-1 rounded bg-zinc-950/80 border border-zinc-800 tracking-wider ${
+              currentTurn === "white" ? "text-white" : "text-zinc-600"
+            }`}>
               {formatTime(whiteSeconds)}
             </div>
           </div>
 
-          
         </div>
       </div>
 
-      {/* right side: chat appears only when game started */}
-      <div className="flex flex-col bg-stone-900 m-4 rounded-md w-80">
-        <div className="flex flex-col items-center pt-4 px-4 mb-4 gap-2">
-          <div className="text-xl font-bold tracking-wide">♟ Chess.in</div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className={`w-2 h-2 rounded-full ${status === 'open' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`}></span>
-            <span className="text-gray-400">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
+      {/* Control panel & Chat side-column */}
+      <div className="w-80 bg-zinc-950 border-l border-zinc-900 flex flex-col py-8 px-6 shrink-0 h-full justify-between">
+        
+        {/* Connection status header */}
+        <div className="flex flex-col gap-1 mb-6">
+          <span className="text-[10px] text-zinc-600 font-bold tracking-widest uppercase">matchmaking</span>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight text-white">♟ chess.in</h2>
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800">
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                status === 'open' ? 'bg-emerald-500' : status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
+              }`}></span>
+              <span className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase">
+                {status === 'open' ? 'Live' : status === 'connecting' ? 'Wait' : 'Offline'}
+              </span>
+            </div>
           </div>
           {started && (
-            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full ${isMyTurn ? 'bg-lime-600/30 text-lime-300' : 'bg-stone-700 text-gray-400'}`}>
-              {isMyTurn ? "Your turn" : "Opponent's turn"}
+            <div className="mt-2.5">
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full ${
+                isMyTurn ? 'bg-white text-zinc-950' : 'bg-zinc-900 text-zinc-500 border border-zinc-800'
+              }`}>
+                {isMyTurn ? "Your turn" : "Waiting for Opponent"}
+              </span>
             </div>
           )}
         </div>
-        {!started && !user && (
-         <div className=" flex items-center justify-center ">
-          <div className="bg-stone-900 p-6 rounded-md w-80">
-            <div className="text-xl font-bold mb-3">Enter your name</div>
-            <input
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              placeholder="Your name"
-              className="w-full p-2 rounded mb-3 bg-stone-800 text-white"
-            />
-            <div className="flex justify-center gap-2  my-1 bg-lime-500 text-2xl">
-              <Button
+
+        {/* Dynamic Center Panel (Matchmaker or Chat) */}
+        <div className="flex-1 flex flex-col justify-center gap-4">
+          
+          {/* Matchmaker view: Logged-out guest registration */}
+          {!started && !user && (
+            <div className="bg-zinc-900/10 border border-zinc-900 p-6 rounded-3xl flex flex-col gap-4 shadow-xl">
+              <h3 className="text-sm font-semibold tracking-tight text-zinc-400 text-center">Register Guest Name</h3>
+              <input
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                placeholder="Guest username"
+                className="w-full px-4 py-3 bg-zinc-900/40 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 text-sm outline-none focus:border-zinc-700 transition-colors"
+              />
+              <button
                 onClick={submitGuestName}
                 disabled={isMatching}
-                className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+                className="w-full bg-white hover:bg-zinc-100 text-zinc-950 font-bold py-3.5 rounded-full text-xs tracking-wider uppercase cursor-pointer transition-colors duration-200"
               >
-                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
-              </Button>
-
+                {isMatching ? "Finding Opponent..." : "Play Online"}
+              </button>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {!started && user && (
-         <div className="flex justify-center gap-2 m-5 bg-lime-500 text-2xl">
-              <Button
-                onClick={startMatch}
+          {/* Matchmaker view: Logged-in user quick start */}
+          {!started && user && (
+            <div className="bg-zinc-900/10 border border-zinc-900 p-6 rounded-3xl flex flex-col gap-4 shadow-xl text-center">
+              <h3 className="text-sm font-semibold tracking-tight text-zinc-400">Launch standard game</h3>
+              <button
+                onClick={() => startMatch()}
                 disabled={isMatching}
-                className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed w-xl bg-lime-500" : ""}`}
+                className="w-full bg-white hover:bg-zinc-100 text-zinc-950 font-bold py-3.5 rounded-full text-xs tracking-wider uppercase cursor-pointer transition-colors duration-200"
               >
-                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
-              </Button>
-
+                {isMatching ? "Finding Opponent..." : "Play Online"}
+              </button>
             </div>
-      )}
-        
+          )}
 
-        {started && (
-          <div className="flex flex-col p-2 border-t border-gray-600 flex-1">
-            <div className="text-sm text-gray-300 mb-2">Chat</div>
-              <div className="flex-1 overflow-y-auto mb-2 space-y-2 p-1 flex flex-col">
+          {/* Live Chat component */}
+          {started && (
+            <div className="flex-1 flex flex-col bg-zinc-900/10 border border-zinc-900 rounded-3xl p-4 overflow-hidden h-[360px] justify-between gap-4">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 flex flex-col text-xs">
                 {chatMessages.length === 0 && (
-                  <div className="text-xs text-gray-400">No messages yet — say hi!</div>
+                  <div className="text-zinc-600 text-center font-medium my-auto">No messages yet. Send a friendly greeting!</div>
                 )}
                 {chatMessages.map((msg, i) => {
                   const mine = msg.sender === (myName || user?.email);
                   return (
                     <div
                       key={i}
-                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      className={`flex flex-col max-w-[85%] ${mine ? "self-end items-end" : "self-start items-start"}`}
                     >
+                      <span className="text-[9px] text-zinc-600 font-bold mb-0.5 tracking-tight px-1">{msg.sender?.split("@")[0]}</span>
                       <div
-                        className={`p-1 px-4 rounded max-w-[70%] ${
-                          mine ? "bg-lime-700 text-black" : "bg-stone-700 text-white"
+                        className={`px-3.5 py-2 rounded-2xl tracking-tight leading-relaxed ${
+                          mine 
+                            ? "bg-white text-zinc-950 font-semibold rounded-tr-none" 
+                            : "bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-tl-none"
                         }`}
                       >
-                        <div className="text-xs font-bold">{msg.sender}</div>
-                        <div className="text-sm">{msg.message}</div>
+                        {msg.message}
                       </div>
                     </div>
                   );
-              })}
+                })}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-2.5 bg-zinc-900/40 border border-zinc-800 rounded-full text-white placeholder-zinc-600 text-xs outline-none focus:border-zinc-700 transition-colors"
+                />
+                <button 
+                  onClick={sendChat} 
+                  className="bg-white hover:bg-zinc-100 text-zinc-950 font-bold px-4 py-2.5 rounded-full text-xs transition-colors duration-200 cursor-pointer"
+                >
+                  Send
+                </button>
+              </div>
             </div>
+          )}
 
+        </div>
 
-            <div className="flex gap-1">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                placeholder="Type a message..."
-                className="flex-1 p-2 rounded-l bg-stone-800 text-white border border-gray-600"
-              />
-              <Button onClick={sendChat} className="bg-lime-600 text-white rounded-r px-4">
-                Send
-                
+        {/* Footer info or legal */}
+        <div className="text-center text-[10px] text-zinc-600 font-medium tracking-tight mt-6">
+          © chess.in • Minimalist Chess App
+        </div>
 
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Toast notification */}
+      {/* Toast notifications */}
       {toast && (
         <div
-          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-xl shadow-2xl text-sm font-semibold backdrop-blur-md border ${
-            toast.type === 'error' ? 'bg-red-500/20 border-red-500/40 text-red-200' :
-            toast.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200' :
-            'bg-sky-500/20 border-sky-500/40 text-sky-200'
+          className={`fixed top-6 left-1/2 z-50 px-5 py-2.5 rounded-full shadow-2xl text-xs font-bold backdrop-blur-md border tracking-wide ${
+            toast.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-200' :
+            toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-200' :
+            'bg-zinc-900 border-zinc-800 text-zinc-300'
           }`}
           style={{ animation: 'toastSlideIn 0.3s ease-out', transform: 'translateX(-50%)' }}
         >
@@ -556,25 +539,27 @@ export default function Game() {
         </div>
       )}
 
-      {/* Win celebration banner */}
+      {/* Victory Celebration Overlay */}
       {showWinBanner && (
-        <div className="win-animation">
-          🏆 Victory! 🏆
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-50 animate-pulse bg-white/5">
+          <span className="text-5xl font-black tracking-widest text-white uppercase bg-zinc-950 border border-zinc-800 px-8 py-4 rounded-3xl shadow-2xl">
+            🏆 Victory!
+          </span>
         </div>
       )}
 
-      {/* Game over modal */}
+      {/* Game Over modal dialog */}
       {gameOverMessage && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="bg-stone-800 border border-stone-600/50 p-10 rounded-2xl text-center shadow-2xl min-w-[320px]"
-            style={{ animation: 'modalPop 0.35s ease-out' }}>
-            <div className="text-6xl mb-4">♚</div>
-            <div className="text-3xl font-bold mb-2">{gameOverMessage}</div>
-            <p className="text-gray-400 mb-8">Good game!</p>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-45"
+          style={{ animation: 'fadeIn 0.25s ease-out' }}>
+          <div className="bg-zinc-950 border border-zinc-900 p-10 rounded-3xl text-center shadow-2xl max-w-sm flex flex-col items-center gap-4"
+            style={{ animation: 'modalPop 0.3s ease-out' }}>
+            <span className="text-4xl text-zinc-400">♚</span>
+            <div className="text-2xl font-black text-white tracking-tight">{gameOverMessage}</div>
+            <p className="text-zinc-500 text-xs font-medium tracking-tight">Spectacular game! Ready for another battle?</p>
             <button
               onClick={handlePlayAgain}
-              className="bg-lime-600 hover:bg-lime-500 text-white font-bold py-3 px-10 rounded-xl transition-colors duration-200 cursor-pointer text-lg shadow-lg shadow-lime-600/25"
+              className="mt-2 bg-white hover:bg-zinc-100 text-zinc-950 font-bold py-3 px-8 rounded-full text-xs tracking-wider uppercase transition-colors duration-200 cursor-pointer shadow-lg"
             >
               Play Again
             </button>
