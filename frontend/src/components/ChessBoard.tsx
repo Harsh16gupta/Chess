@@ -26,32 +26,6 @@ function getPieceImage(color: Color, type: PieceSymbol): string {
 // ─── Square colors (Sleek Slate Grayscale Theme) ───────────
 const LIGHT_SQUARE = "#e2e8f0";   // Sleek off-white slate
 const DARK_SQUARE = "#475569";    // Neutral slate charcoal
-const SELECTED_LIGHT = "#cbd5e1"; // Slate-300 selection highlight
-const SELECTED_DARK = "#334155";  // Slate-700 selection highlight
-const LAST_MOVE_LIGHT = "#94a3b8"; // Slate-400 last move highlight
-const LAST_MOVE_DARK = "#1e293b";  // Slate-800 last move highlight
-
-function getSquareColor(
-  row: number,
-  col: number,
-  squareName: string,
-  selectedSquare: string | null,
-  lastMove: { from: string; to: string } | null
-): string {
-  const isLight = (row + col) % 2 === 0;
-
-  // Selected piece highlight
-  if (squareName === selectedSquare) {
-    return isLight ? SELECTED_LIGHT : SELECTED_DARK;
-  }
-
-  // Last move highlight
-  if (lastMove && (squareName === lastMove.from || squareName === lastMove.to)) {
-    return isLight ? LAST_MOVE_LIGHT : LAST_MOVE_DARK;
-  }
-
-  return isLight ? LIGHT_SQUARE : DARK_SQUARE;
-}
 
 // ─── Component ──────────────────────────────────────────────
 export const ChessBoard = ({
@@ -67,7 +41,7 @@ export const ChessBoard = ({
   const displayRows = flipped ? [...board].reverse() : board;
 
   return (
-    <div className="w-full h-full select-none">
+    <div className="w-full h-full select-none rounded-xl overflow-hidden shadow-2xl border-4 border-slate-900/50">
       <div
         className="grid w-full h-full"
         style={{ gridTemplateColumns: "repeat(8, 1fr)", gridTemplateRows: "repeat(8, 1fr)" }}
@@ -84,7 +58,8 @@ export const ChessBoard = ({
             const isValidTarget = validMoves.includes(squareName);
             const hasPiece = piece !== null;
 
-            const bgColor = getSquareColor(actualRow, actualCol, squareName, selectedSquare, lastMove);
+            const isLight = (actualRow + actualCol) % 2 === 0;
+            const bgColor = isLight ? LIGHT_SQUARE : DARK_SQUARE;
 
             // File/rank labels on edges
             const showRankLabel = actualCol === (flipped ? 7 : 0);
@@ -93,15 +68,25 @@ export const ChessBoard = ({
             return (
               <div
                 key={squareName}
-                className="relative flex items-center justify-center cursor-pointer"
+                className="relative flex items-center justify-center cursor-pointer transition-colors duration-150"
                 style={{ backgroundColor: bgColor }}
                 onClick={() => onSquareClick(squareName)}
               >
+                {/* Selection Highlight (Glass overlay border) */}
+                {squareName === selectedSquare && (
+                  <div className="absolute inset-0 bg-white/10 border-2 border-white/80 shadow-[inset_0_0_8px_rgba(255,255,255,0.4)] pointer-events-none z-10" />
+                )}
+
+                {/* Last Move Indicator (Subtle overlay highlight) */}
+                {lastMove && (squareName === lastMove.from || squareName === lastMove.to) && (
+                  <div className="absolute inset-0 bg-white/[0.07] border border-white/20 pointer-events-none z-10" />
+                )}
+
                 {/* Rank label (1-8 on left edge) */}
                 {showRankLabel && (
                   <span
-                    className="absolute top-0.5 left-1 text-xs font-semibold pointer-events-none"
-                    style={{ color: (actualRow + actualCol) % 2 === 0 ? DARK_SQUARE : LIGHT_SQUARE, fontSize: "0.65rem" }}
+                    className="absolute top-1 left-1.5 font-black pointer-events-none select-none opacity-40"
+                    style={{ color: isLight ? DARK_SQUARE : LIGHT_SQUARE, fontSize: "0.6rem" }}
                   >
                     {rank}
                   </span>
@@ -110,8 +95,8 @@ export const ChessBoard = ({
                 {/* File label (a-h on bottom edge) */}
                 {showFileLabel && (
                   <span
-                    className="absolute bottom-0.5 right-1 text-xs font-semibold pointer-events-none"
-                    style={{ color: (actualRow + actualCol) % 2 === 0 ? DARK_SQUARE : LIGHT_SQUARE, fontSize: "0.65rem" }}
+                    className="absolute bottom-1 right-1.5 font-black pointer-events-none select-none opacity-40"
+                    style={{ color: isLight ? DARK_SQUARE : LIGHT_SQUARE, fontSize: "0.6rem" }}
                   >
                     {file}
                   </span>
@@ -119,15 +104,17 @@ export const ChessBoard = ({
 
                 {/* Valid move indicator */}
                 {isValidTarget && !hasPiece && (
-                  <div className={`absolute w-[28%] h-[28%] rounded-full pointer-events-none ${
-                    (actualRow + actualCol) % 2 === 0 ? "bg-black/20" : "bg-white/20"
+                  <div className={`absolute w-[24%] h-[24%] rounded-full pointer-events-none transition-all duration-200 z-10 ${
+                    isLight 
+                      ? "bg-slate-800/40 border border-slate-900/10 shadow-[0_0_6px_rgba(0,0,0,0.15)]" 
+                      : "bg-slate-200/50 border border-white/20 shadow-[0_0_6px_rgba(255,255,255,0.2)]"
                   }`} />
                 )}
 
                 {/* Valid capture indicator (ring around enemy piece) */}
                 {isValidTarget && hasPiece && (
-                  <div className={`absolute inset-[6%] rounded-full border-[3px] pointer-events-none ${
-                    (actualRow + actualCol) % 2 === 0 ? "border-black/25" : "border-white/25"
+                  <div className={`absolute inset-[6%] rounded-full border-2 pointer-events-none z-10 animate-pulse ${
+                    isLight ? "border-slate-800/40" : "border-slate-200/50"
                   }`} />
                 )}
 
@@ -136,7 +123,7 @@ export const ChessBoard = ({
                   <img
                     src={getPieceImage(piece.color, piece.type)}
                     alt={`${piece.color}${piece.type}`}
-                    className="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-sm"
+                    className="w-[84%] h-[84%] object-contain pointer-events-none drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] hover:scale-105 transition-transform duration-250 relative z-20"
                     draggable={false}
                   />
                 )}

@@ -7,6 +7,7 @@ import { Chess } from "chess.js";
 import type { Square } from "chess.js";
 import { LoginSidebar } from "../components/LoginSidebar";
 import { useAuth } from "../context/AuthContext";
+import { sound } from "../utils/sound";
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -66,6 +67,45 @@ export default function Game() {
     white: "Waiting...",
     black: "Waiting...",
   });
+
+  // Moves history and active tab states
+  const [historyLog, setHistoryLog] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"chat" | "moves">("chat");
+
+  // Unified move executor to trigger UI updates and correct sound effects
+  const processMove = (moveInput: any) => {
+    try {
+      const isCaptureBefore = chess.get(moveInput.to) !== null || (moveInput.promotion && chess.get(moveInput.to) === null && chess.get(moveInput.from)?.type === 'p' && moveInput.to[0] !== moveInput.from[0]);
+      const result = chess.move(moveInput);
+      if (!result) return false;
+
+      // Update board and history log states
+      setBoard(chess.board());
+      setHistoryLog(chess.history());
+
+      // Determine sound effect
+      if (chess.isGameOver()) {
+        if (chess.isCheckmate()) {
+          const loserColor = chess.turn();
+          const won = myColor ? (myColor[0] !== loserColor) : true;
+          sound.playGameOver(won ? "win" : "loss");
+        } else {
+          sound.playGameOver("draw");
+        }
+      } else if (chess.inCheck()) {
+        sound.playCheck();
+      } else if (result.captured || isCaptureBefore) {
+        sound.playCapture();
+      } else {
+        sound.playMove();
+      }
+
+      return result;
+    } catch (err) {
+      console.error("Move validation error:", err);
+      return false;
+    }
+  };
   const [currentTurn, setCurrentTurn] = useState<"white" | "black">("white");
   const [started, setStarted] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
@@ -191,7 +231,6 @@ export default function Game() {
         }
         case INIT_GAME: {
           const p = message.payload;
-          // server should send: color, name, opponent, timeLeft {white, black} (ms), board (fen) optional
           setMyColor(p.color);
           const whiteName = p.color === "white" ? (myName ?? p.name) : p.opponent;
           const blackName = p.color === "black" ? (myName ?? p.name) : p.opponent;
@@ -201,8 +240,12 @@ export default function Game() {
             try {
               chess.load(p.board);
             } catch {}
-            setBoard(chess.board());
+          } else {
+            chess.reset();
           }
+          setBoard(chess.board());
+          setHistoryLog(chess.history());
+          sound.playMove();
 
           setTimeLeftMs({
             white: Math.max(0, p.timeLeft?.white ?? timeLeftMs.white),
@@ -212,25 +255,38 @@ export default function Game() {
           setCurrentTurn(p.turn ?? (chess.turn() === "w" ? "white" : "black"));
           setStarted(true);
           setGameOverMessage(null);
-          // show chat only after game starts — the chat rendering is conditional below
-          setIsMatching(false);  // stop matching animation here
+          setIsMatching(false);
           break;
         }
         case MOVE: {
           const p = message.payload;
-          // prefer server FEN
-          if (p.board) {
+          
+          let moveResult: any = false;
+          if (p.move) {
+            moveResult = processMove(p.move);
+          }
+          
+          if (!moveResult && p.board) {
             try {
               chess.load(p.board);
-            } catch {}
-          } else if (p.move) {
-            try {
-              chess.move(p.move);
+              setBoard(chess.board());
+              setHistoryLog(chess.history());
+              sound.playMove();
             } catch {}
           }
-          setBoard(chess.board());
-          setCurrentTurn(p.turn ?? (chess.turn() === "w" ? "white" : "black"));
+          
+          if (p.move) {
+            setLastMove(p.move);
+          }
 
+          if (chess.isCheckmate()) {
+            showToast("Checkmate!", "success");
+            triggerWinAnimation();
+          } else if (chess.inCheck()) {
+            showToast("Check!", "info");
+          }
+
+          setCurrentTurn(p.turn ?? (chess.turn() === "w" ? "white" : "black"));
           setTimeLeftMs({
             white: Math.max(0, p.timeLeft?.white ?? timeLeftMs.white),
             black: Math.max(0, p.timeLeft?.black ?? timeLeftMs.black),
@@ -240,9 +296,17 @@ export default function Game() {
         }
         case GAME_OVER: {
           const p = message.payload;
-          if (p.result === "draw") setGameOverMessage("Draw");
-          else if (p.winnerName) setGameOverMessage(`${p.winnerName} won`);
-          else setGameOverMessage("Game Over");
+          if (p.result === "draw") {
+            setGameOverMessage("Draw");
+            sound.playGameOver("draw");
+          } else if (p.winnerName) {
+            setGameOverMessage(`${p.winnerName} won`);
+            const weWon = myName && p.winnerName.toLowerCase() === myName.toLowerCase();
+            sound.playGameOver(weWon ? "win" : "loss");
+          } else {
+            setGameOverMessage("Game Over");
+            sound.playGameOver("draw");
+          }
 
           setStarted(false);
           if (p.board) {
@@ -250,6 +314,7 @@ export default function Game() {
               chess.load(p.board);
             } catch {}
             setBoard(chess.board());
+            setHistoryLog(chess.history());
           }
           break;
         }
@@ -325,7 +390,7 @@ export default function Game() {
     } 
     // Making a move
     else if (selectedSquare && validMoves.includes(sq)) {
-      const move = chess.move({ from: selectedSquare, to: sq });
+      const move = processMove({ from: selectedSquare, to: sq });
 
       if (!move) {
         showToast("Invalid move!", "error");
@@ -546,44 +611,103 @@ export default function Game() {
       )}
 
         {started && (
-          <div className={`flex flex-col p-3 border-t ${theme.panelBorder} flex-1 overflow-hidden`}>
-            <div className={`text-xs font-bold ${theme.textMuted} uppercase tracking-wider mb-2`}>Chat</div>
-            <div className="flex-1 overflow-y-auto mb-3 space-y-2 p-1 flex flex-col">
-              {chatMessages.length === 0 && (
-                <div className="text-xs text-zinc-650 italic">No messages yet — say hi!</div>
-              )}
-              {chatMessages.map((msg, i) => {
-                const mine = msg.sender === (myName || user?.email);
-                return (
-                  <div
-                    key={i}
-                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`p-2 px-3 rounded-lg max-w-[85%] ${
-                        mine ? theme.bubbleMine : theme.bubbleOpponent
-                      }`}
-                    >
-                      <div className="text-[10px] opacity-75 font-mono mb-0.5">{msg.sender}</div>
-                      <div className="text-sm leading-relaxed">{msg.message}</div>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Tab switcher */}
+            <div className={`flex border-b ${theme.panelBorder}`}>
+              <button
+                onClick={() => setActiveTab("chat")}
+                className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "chat"
+                    ? "border-white text-white font-extrabold"
+                    : `${theme.textMuted} border-transparent hover:text-white`
+                }`}
+              >
+                Chat
+              </button>
+              <button
+                onClick={() => setActiveTab("moves")}
+                className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "moves"
+                    ? "border-white text-white font-extrabold"
+                    : `${theme.textMuted} border-transparent hover:text-white`
+                }`}
+              >
+                Moves
+              </button>
             </div>
 
-            <div className="flex gap-1.5">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                placeholder="Type a message..."
-                className={`flex-1 p-2 ${theme.inputBg} border ${theme.panelBorder} rounded-lg text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors text-sm`}
-              />
-              <Button onClick={sendChat} className={`${theme.btnPrimary} rounded-lg px-4 font-bold text-sm transition-colors`}>
-                Send
-              </Button>
-            </div>
+            {activeTab === "chat" ? (
+              <div className={`flex flex-col p-3 border-t ${theme.panelBorder} flex-1 overflow-hidden`}>
+                <div className={`text-xs font-bold ${theme.textMuted} uppercase tracking-wider mb-2`}>Chat</div>
+                <div className="flex-1 overflow-y-auto mb-3 space-y-2 p-1 flex flex-col">
+                  {chatMessages.length === 0 && (
+                    <div className="text-xs text-zinc-650 italic">No messages yet — say hi!</div>
+                  )}
+                  {chatMessages.map((msg, i) => {
+                    const mine = msg.sender === (myName || user?.email);
+                    return (
+                      <div
+                        key={i}
+                        className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`p-2 px-3 rounded-lg max-w-[85%] ${
+                            mine ? theme.bubbleMine : theme.bubbleOpponent
+                          }`}
+                        >
+                          <div className="text-[10px] opacity-75 font-mono mb-0.5">{msg.sender}</div>
+                          <div className="text-sm leading-relaxed">{msg.message}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-1.5">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                    placeholder="Type a message..."
+                    className={`flex-1 p-2 ${theme.inputBg} border ${theme.panelBorder} rounded-lg text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors text-sm`}
+                  />
+                  <Button onClick={sendChat} className={`${theme.btnPrimary} rounded-lg px-4 font-bold text-sm transition-colors`}>
+                    Send
+                  </Button>
+                </div>
+              </div>
+            ) : (() => {
+              // Group historyLog into pairs
+              const movePairs: { round: number; white: string; black?: string }[] = [];
+              for (let i = 0; i < historyLog.length; i += 2) {
+                movePairs.push({
+                  round: Math.floor(i / 2) + 1,
+                  white: historyLog[i],
+                  black: historyLog[i + 1],
+                });
+              }
+
+              return (
+                <div className="flex flex-col p-3 flex-1 overflow-hidden">
+                  <div className={`text-xs font-bold ${theme.textMuted} uppercase tracking-wider mb-3`}>Move History</div>
+                  <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                    {movePairs.length === 0 ? (
+                      <div className="text-xs text-zinc-650 italic">No moves played yet. Start the match!</div>
+                    ) : (
+                      <div className="grid grid-cols-12 gap-1 text-sm font-mono font-medium">
+                        {movePairs.map((pair) => (
+                          <div key={pair.round} className="col-span-12 grid grid-cols-12 py-1 px-2 rounded hover:bg-white/[0.03]">
+                            <span className={`col-span-2 ${theme.textMuted} text-xs font-bold`}>{pair.round}.</span>
+                            <span className="col-span-5 text-slate-100 font-bold">{pair.white}</span>
+                            <span className="col-span-5 text-slate-400">{pair.black || ""}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

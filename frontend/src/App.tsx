@@ -7,6 +7,7 @@ import SignUp from "./screens/SignUp";
 import Login from "./screens/Login";
 import Email from "./screens/Email";
 import './index.css';
+import './App.css';
 import Home from "./screens/Home";
 
 export function App() {
