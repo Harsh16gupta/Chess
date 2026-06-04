@@ -81,6 +81,7 @@ export default function Game() {
   const [activeTab, setActiveTab] = useState<"chat" | "moves" | "coach">("chat");
   const [coachFeedback, setCoachFeedback] = useState<string | null>(null);
   const [isCoachLoading, setIsCoachLoading] = useState(false);
+  const [aiEngine, setAiEngine] = useState<"gemini" | "grok">("gemini");
 
   // Unified move executor to trigger UI updates and correct sound effects
   const processMove = (moveInput: any) => {
@@ -184,14 +185,25 @@ export default function Game() {
   const askCoach = async () => {
     try {
       setIsCoachLoading(true);
-      const res = await axios.post("http://localhost:3000/api/coach/analyze", {
-        fen: chess.fen(),
-        pgn: chess.history().join(" "),
-      });
+      const res = await axios.post(
+        "http://localhost:3000/api/coach/analyze",
+        {
+          fen: chess.fen(),
+          pgn: chess.history().join(" "),
+          engine: aiEngine,
+        },
+        {
+          headers: {
+            "x-gemini-key": localStorage.getItem("user_gemini_key") || "",
+            "x-grok-key": localStorage.getItem("user_grok_key") || "",
+          },
+        }
+      );
       setCoachFeedback(res.data.analysis || null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Coach API error:", err);
-      showToast("Could not reach the Coach. Try again shortly.", "error");
+      const errMsg = err.response?.data?.error || "Could not reach the Coach. Try again shortly.";
+      showToast(errMsg, "error");
     } finally {
       setIsCoachLoading(false);
     }
@@ -902,17 +914,29 @@ export default function Game() {
               );
             })() : (
               <div className="flex flex-col p-4 flex-1 overflow-hidden border-t border-zinc-900">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
-                      <path d="M8 19h8"/>
-                      <path d="M6 22h12"/>
-                    </svg>
+                <div className="flex items-center justify-between gap-2 mb-3 w-full">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+                        <path d="M8 19h8"/>
+                        <path d="M6 22h12"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">{aiEngine === "gemini" ? "Garry" : "Grok"}</div>
+                      <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">AI Chess Coach</div>
+                    </div>
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">Garry</div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">AI Chess Coach</div>
+                    <select
+                      value={aiEngine}
+                      onChange={(e) => setAiEngine(e.target.value as any)}
+                      className={`p-1.5 rounded-lg bg-[#0f0f0e] border border-[#2c2c2a] text-white text-xs outline-none cursor-pointer focus:border-[#efebe4]`}
+                    >
+                      <option value="gemini">Gemini</option>
+                      <option value="grok">Grok</option>
+                    </select>
                   </div>
                 </div>
 
@@ -927,7 +951,7 @@ export default function Game() {
                     </div>
                   ) : (
                     <div className="text-xs text-zinc-500 italic text-center mt-8">
-                      Click the button below to ask Coach Garry for real-time strategic advice about the current position.
+                      Click the button below to ask Coach {aiEngine === "gemini" ? "Garry" : "Grok"} for real-time strategic advice about the current position.
                     </div>
                   )}
                 </div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom"
 import { Button } from "./Button"
 import { useAuth } from "../context/AuthContext"
@@ -6,6 +7,24 @@ export const LoginSidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
+
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [localGeminiKey, setLocalGeminiKey] = useState(() => localStorage.getItem("user_gemini_key") || "");
+    const [localGrokKey, setLocalGrokKey] = useState(() => localStorage.getItem("user_grok_key") || "");
+
+    const handleSaveKeys = () => {
+        localStorage.setItem("user_gemini_key", localGeminiKey.trim());
+        localStorage.setItem("user_grok_key", localGrokKey.trim());
+        setShowSettingsModal(false);
+    };
+
+    const handleClearKeys = () => {
+        localStorage.removeItem("user_gemini_key");
+        localStorage.removeItem("user_grok_key");
+        setLocalGeminiKey("");
+        setLocalGrokKey("");
+        setShowSettingsModal(false);
+    };
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -64,13 +83,12 @@ export const LoginSidebar = () => {
 
                     <Button 
                         className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 text-slate-400 hover:bg-[#111625] hover:text-slate-100`}
-                        onClick={() => navigate("/more")}>
-                        <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <circle cx="5" cy="12" r="2"/>
-                            <circle cx="12" cy="12" r="2"/>
-                            <circle cx="19" cy="12" r="2"/>
+                        onClick={() => setShowSettingsModal(true)}>
+                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                         </svg>
-                        More
+                        API Settings
                     </Button>
                 </div>
             </div>
@@ -88,6 +106,60 @@ export const LoginSidebar = () => {
                     Log out
                 </Button>
             </div>
+
+            {showSettingsModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+                    <div className="bg-[#1a1918] border border-[#2c2c2a] p-6 rounded-xl text-left shadow-2xl min-w-[300px] max-w-sm animate-modal-pop text-white">
+                        <h3 className="text-lg font-black mb-3">API Keys Settings</h3>
+                        <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
+                            Save your API keys to bypass server rate limits. Keys are stored safely in your local browser storage.
+                        </p>
+
+                        <div className="mb-3">
+                            <label className="text-[10px] text-zinc-500 font-bold block mb-1 uppercase tracking-wider">Gemini API Key</label>
+                            <input
+                                type="password"
+                                value={localGeminiKey}
+                                onChange={(e) => setLocalGeminiKey(e.target.value)}
+                                placeholder="AIzaSy... (Gemini Key)"
+                                className="w-full p-2.5 rounded-lg bg-[#0f0f0e] border border-[#2c2c2a] text-white focus:border-[#efebe4] outline-none text-xs font-mono"
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="text-[10px] text-zinc-500 font-bold block mb-1 uppercase tracking-wider">Grok (xAI) API Key</label>
+                            <input
+                                type="password"
+                                value={localGrokKey}
+                                onChange={(e) => setLocalGrokKey(e.target.value)}
+                                placeholder="xai-... (Grok Key)"
+                                className="w-full p-2.5 rounded-lg bg-[#0f0f0e] border border-[#2c2c2a] text-white focus:border-[#efebe4] outline-none text-xs font-mono"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleSaveKeys}
+                                className="flex-1 py-2 bg-[#efebe4] text-[#1c1b1a] font-bold rounded-lg hover:bg-[#e0dad0] text-xs transition-colors cursor-pointer text-center"
+                            >
+                                Save Keys
+                            </button>
+                            <button
+                                onClick={handleClearKeys}
+                                className="py-2 px-3 bg-red-950/40 text-red-400 border border-red-900/50 font-bold rounded-lg hover:bg-red-950/80 text-xs transition-colors cursor-pointer text-center"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                onClick={() => setShowSettingsModal(false)}
+                                className="py-2 px-3 bg-zinc-900 text-zinc-400 border border-zinc-800 font-bold rounded-lg hover:bg-zinc-850 text-xs transition-colors cursor-pointer text-center"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
