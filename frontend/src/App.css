@@ -11,16 +11,17 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 3rem;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
-  color: #1c1917;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
   padding: 1.25rem 2.5rem;
-  border-radius: 16px;
+  border-radius: 4px;
   animation: winPop 3.5s ease forwards;
   z-index: 9999;
-  box-shadow: 0 0 80px rgba(251, 191, 36, 0.5), 0 4px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.7);
   pointer-events: none;
   font-weight: 900;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 
 @keyframes winPop {
