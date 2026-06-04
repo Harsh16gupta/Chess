@@ -8,9 +8,12 @@ class GameManager {
     constructor() {
         this.games = new Set();
         this.socketToGame = new Map();
+        this.socketToUser = new Map();
         this.pendingUser = null;
     }
-    addUser(socket) {
+    addUser(socket, userMeta) {
+        const name = userMeta ? userMeta.email : `Guest${Math.floor(1000 + Math.random() * 9000)}`;
+        this.socketToUser.set(socket, { userId: userMeta === null || userMeta === void 0 ? void 0 : userMeta.userId, name });
         this.addHandler(socket);
     }
     addHandler(socket) {
@@ -38,8 +41,20 @@ class GameManager {
             this.removeUser(socket);
         });
     }
+    /*
+     * MATCHMAKING PIPELINE:
+     * - Uses a simple 1-element FIFO queue (pendingUser).
+     * - If a client calls 'init_game':
+     *   - If a player is already in queue (this.pendingUser), we immediately match them
+     *     and construct a new Game session, mapping both socket connections to the game.
+     *   - If the queue is empty, the player is cached as `this.pendingUser`.
+     * - Limitation: Does not check ELO boundaries or queue timeouts; matching is purely sequential.
+     */
     handleInitGame(socket, name) {
-        const newUser = { socket, name };
+        const userMeta = this.socketToUser.get(socket);
+        // Prioritize the server-resolved identity over client-supplied payload parameters
+        const resolvedName = userMeta ? userMeta.name : name || "Unknown";
+        const newUser = { socket, name: resolvedName };
         // If already in a game, ignore
         if (this.socketToGame.has(socket))
             return;
@@ -70,6 +85,8 @@ class GameManager {
     }
     removeUser(leavingSocket) {
         var _a;
+        // Remove user mapping to clean up memory
+        this.socketToUser.delete(leavingSocket);
         // If they were waiting to be matched
         if (((_a = this.pendingUser) === null || _a === void 0 ? void 0 : _a.socket) === leavingSocket) {
             this.pendingUser = null;
@@ -80,7 +97,7 @@ class GameManager {
         if (game) {
             const opponentSocket = game.player1 === leavingSocket ? game.player2 : game.player1;
             this.safeSend(opponentSocket, { type: "opponent_left" });
-            // Cleanup
+            // Cleanup game mappings
             this.socketToGame.delete(leavingSocket);
             this.socketToGame.delete(opponentSocket);
             this.games.delete(game);
