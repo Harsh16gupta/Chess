@@ -86,14 +86,28 @@ export default function Review() {
     try {
       setIsPlaying(false);
       const tempChess = new Chess();
-      tempChess.loadPgn(pgnStr);
-      const history = tempChess.history();
 
-      const metas: MoveMeta[] = history.map((san, idx) => ({
-        san,
-        classification: classifyMove(san, idx, history.length),
-        score: getEvalScore(idx, history.length)
-      }));
+      // Clean and parse PGN moves manually to bypass loadPgn ESM/bundler issues
+      const cleanMoves = pgnStr
+        .replace(/\{[^}]*\}/g, "") // remove comments
+        .split(/\s+/)
+        .filter(t => t && !t.includes('.') && t !== '1-0' && t !== '0-1' && t !== '1/2-1/2' && t !== '*');
+
+      const history: string[] = [];
+      const metas: MoveMeta[] = [];
+
+      for (let i = 0; i < cleanMoves.length; i++) {
+        const m = cleanMoves[i];
+        const moveObj = tempChess.move(m);
+        if (moveObj) {
+          history.push(moveObj.san);
+          metas.push({
+            san: moveObj.san,
+            classification: classifyMove(moveObj.san, i, cleanMoves.length),
+            score: getEvalScore(i, cleanMoves.length)
+          });
+        }
+      }
 
       setMovesList(history);
       setParsedMoves(metas);
@@ -102,8 +116,9 @@ export default function Review() {
 
       // Play start sound
       sound.playMove();
-    } catch (err) {
-      alert("Failed to parse PGN. Please ensure it follows standard chess notation.");
+    } catch (err: any) {
+      console.error("PGN Load Error:", err);
+      alert("Failed to parse PGN: " + err.message);
     }
   };
 
