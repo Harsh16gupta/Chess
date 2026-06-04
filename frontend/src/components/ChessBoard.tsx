@@ -23,13 +23,13 @@ function getPieceImage(color: Color, type: PieceSymbol): string {
   return `/${prefix}${type.toUpperCase()}.png`;
 }
 
-// ─── Square colors (Stark Black & White Redesign) ───────────
-const LIGHT_SQUARE = "#f4f4f5";   // Zinc 100 (crisp light zinc)
-const DARK_SQUARE = "#27272a";    // Zinc 800 (deep charcoal zinc)
-const SELECTED_LIGHT = "#a1a1aa"; // Zinc 400 (mid-gray selection highlight)
-const SELECTED_DARK = "#71717a";  // Zinc 500 (darker-gray selection highlight)
-const LAST_MOVE_LIGHT = "#e4e4e7"; // Zinc 200
-const LAST_MOVE_DARK = "#3f3f46";  // Zinc 700
+// ─── Square colors (Sleek Slate Grayscale Theme) ───────────
+const LIGHT_SQUARE = "#e2e8f0";   // Sleek off-white slate
+const DARK_SQUARE = "#475569";    // Neutral slate charcoal
+const SELECTED_LIGHT = "#cbd5e1"; // Slate-300 selection highlight
+const SELECTED_DARK = "#334155";  // Slate-700 selection highlight
+const LAST_MOVE_LIGHT = "#94a3b8"; // Slate-400 last move highlight
+const LAST_MOVE_DARK = "#1e293b";  // Slate-800 last move highlight
 
 function getSquareColor(
   row: number,

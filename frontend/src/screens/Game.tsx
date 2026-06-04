@@ -29,6 +29,29 @@ function genGuestName() {
 
 export default function Game() {
   const { user } = useAuth();
+  
+  // Theme configurations for guest vs logged-in screens
+  const isLoggedIn = !!user;
+  const theme = {
+    screenBg: isLoggedIn ? "bg-[#0a0d14]" : "bg-[#151413]",
+    sidebarBorder: isLoggedIn ? "border-[#1e293b]" : "border-[#2c2b2a]",
+    panelBg: isLoggedIn ? "bg-[#111625]" : "bg-[#1a1918]",
+    panelBorder: isLoggedIn ? "border-[#1e293b]" : "border-[#2c2b2a]",
+    chatBg: isLoggedIn ? "bg-[#111625]" : "bg-[#1a1918]",
+    inputBg: isLoggedIn ? "bg-[#090c15]" : "bg-[#151413]",
+    inputFocus: isLoggedIn ? "focus:border-[#e2e8f0]" : "focus:border-[#efebe4]",
+    textMuted: isLoggedIn ? "text-[#64748b]" : "text-[#8e8d89]",
+    badgeInactive: isLoggedIn ? "bg-[#1e293b] border-[#334155] text-[#64748b]" : "bg-[#2c2b2a] border-[#3e3d3a] text-[#8e8d89]",
+    badgeActive: isLoggedIn ? "bg-[#e2e8f0] text-[#0f172a]" : "bg-[#efebe4] text-[#1c1b1a]",
+    playerHudActive: isLoggedIn ? "bg-[#e2e8f0] text-[#0f172a]" : "bg-[#efebe4] text-[#1c1b1a]",
+    playerHudInactive: isLoggedIn ? "bg-[#111625] text-[#64748b]" : "bg-[#1a1918] text-[#8e8d89]",
+    playerHudAvatarActive: isLoggedIn ? "bg-[#0f172a] text-[#e2e8f0]" : "bg-[#1c1b1a] text-[#efebe4]",
+    playerHudAvatarInactive: isLoggedIn ? "bg-[#1e293b] text-[#cbd5e1]" : "bg-[#2c2b2a] text-white",
+    bubbleMine: isLoggedIn ? "bg-[#e2e8f0] text-[#0f172a] font-semibold shadow-sm" : "bg-[#efebe4] text-[#1c1b1a] font-semibold shadow-sm",
+    bubbleOpponent: isLoggedIn ? "bg-[#1e293b] border border-[#334155] text-white" : "bg-[#2c2b2a] border border-[#3e3d3a] text-white",
+    btnPrimary: isLoggedIn ? "bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#0f172a]" : "bg-[#efebe4] hover:bg-[#e0dad0] text-[#1c1b1a]",
+  };
+
   const socket = useSocket(); // WebSocket | null
   const [chess] = useState(() => new Chess());
   const [board, setBoard] = useState(chess.board());
@@ -379,22 +402,22 @@ export default function Game() {
   // Board size class: smaller (85vmin) so top & bottom   // Board size class: smaller (85vmin) so top & bottom bars fit
   // Player bars above and below board are fixed-height so both names show
   return (
-    <div className="flex h-screen w-screen bg-black text-white">
+    <div className={`flex h-screen w-screen ${theme.screenBg} text-white`}>
       {!user ? <SideBar /> : <LoginSidebar />}
 
-      <div className="flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative bg-black">
+      <div className={`flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative ${theme.screenBg}`}>
         {/* center game area */}
         <div className="flex flex-col items-center">
           {/* top player bar */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-t-xl flex items-center justify-between transition-colors duration-200 border border-zinc-900 ${
-              currentTurn === "black" ? "bg-white text-black font-bold" : "bg-zinc-950 text-zinc-400"
+            className={`w-full max-w-3xl p-2 rounded-t-xl flex items-center justify-between transition-colors duration-200 border ${theme.panelBorder} ${
+              currentTurn === "black" ? `${theme.playerHudActive} font-bold` : `${theme.playerHudInactive}`
             }`}
             style={{ height: 48 }}
           >
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                currentTurn === "black" ? "bg-black text-white" : "bg-zinc-800 text-white"
+                currentTurn === "black" ? theme.playerHudAvatarActive : theme.playerHudAvatarInactive
               }`}>
                 {players.black?.slice(0, 2).toUpperCase() || "BL"}
               </div>
@@ -409,7 +432,7 @@ export default function Game() {
           </div>
 
           {/* board container (smaller so both bars visible) */}
-          <div className="border-x border-zinc-900" style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
+          <div className={`border-x ${theme.panelBorder}`} style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
             <ChessBoard
               board={board}
               flipped={myColor === "black"}
@@ -422,14 +445,14 @@ export default function Game() {
 
           {/* bottom player bar */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-b-xl flex items-center justify-between transition-colors duration-200 border border-zinc-900 ${
-              currentTurn === "white" ? "bg-white text-black font-bold" : "bg-zinc-950 text-zinc-400"
+            className={`w-full max-w-3xl p-2 rounded-b-xl flex items-center justify-between transition-colors duration-200 border ${theme.panelBorder} ${
+              currentTurn === "white" ? `${theme.playerHudActive} font-bold` : `${theme.playerHudInactive}`
             }`}
             style={{ height: 48 }}
           >
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                currentTurn === "white" ? "bg-black text-white" : "bg-zinc-800 text-white"
+                currentTurn === "white" ? theme.playerHudAvatarActive : theme.playerHudAvatarInactive
               }`}>
                 {players.white?.slice(0, 2).toUpperCase() || "WH"}
               </div>
@@ -446,7 +469,7 @@ export default function Game() {
       </div>
 
       {/* right side: chat appears only when game started */}
-      <div className="flex flex-col bg-zinc-950 border-l border-zinc-900 w-80">
+      <div className={`flex flex-col ${theme.chatBg} border-l ${theme.sidebarBorder} w-80`}>
         <div className="flex flex-col items-center pt-4 px-4 mb-4 gap-2">
           <div className="text-xl font-bold tracking-wide text-white flex items-center justify-center gap-2">
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
@@ -461,7 +484,7 @@ export default function Game() {
             <span className="text-zinc-500">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
           </div>
           {started && (
-            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full transition-colors ${isMyTurn ? 'bg-white text-black font-bold shadow-sm' : 'bg-zinc-900 border border-zinc-800 text-zinc-500'}`}>
+            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full transition-colors ${isMyTurn ? `${theme.badgeActive} font-bold shadow-sm` : `${theme.badgeInactive}`}`}>
               {isMyTurn ? "Your turn" : "Opponent's turn"}
             </div>
           )}
@@ -469,18 +492,18 @@ export default function Game() {
 
         {!started && !user && (
          <div className="flex items-center justify-center px-4">
-          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 w-full">
+          <div className={`${theme.panelBg} p-6 rounded-xl border ${theme.panelBorder} w-full`}>
             <div className="text-lg font-bold mb-3 text-white">Enter your name</div>
             <input
               value={tempName}
               onChange={(e) => setTempName(e.target.value)}
               placeholder="Your name"
-              className="w-full p-2.5 rounded-lg mb-4 bg-black border border-zinc-800 text-white placeholder-zinc-600 outline-none focus:border-white transition-colors"
+              className={`w-full p-2.5 rounded-lg mb-4 ${theme.inputBg} border ${theme.panelBorder} text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors`}
             />
             <Button
               onClick={submitGuestName}
               disabled={isMatching}
-              className={`w-full bg-white hover:bg-zinc-200 text-black py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {isMatching ? (
                 <span className="flex items-center justify-center gap-2">
@@ -504,7 +527,7 @@ export default function Game() {
             <Button
               onClick={startMatch}
               disabled={isMatching}
-              className={`w-full bg-white hover:bg-zinc-200 text-black py-3 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full ${theme.btnPrimary} py-3 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {isMatching ? (
                 <span className="flex items-center justify-center gap-2">
@@ -523,8 +546,8 @@ export default function Game() {
       )}
 
         {started && (
-          <div className="flex flex-col p-3 border-t border-zinc-900 flex-1 overflow-hidden">
-            <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Chat</div>
+          <div className={`flex flex-col p-3 border-t ${theme.panelBorder} flex-1 overflow-hidden`}>
+            <div className={`text-xs font-bold ${theme.textMuted} uppercase tracking-wider mb-2`}>Chat</div>
             <div className="flex-1 overflow-y-auto mb-3 space-y-2 p-1 flex flex-col">
               {chatMessages.length === 0 && (
                 <div className="text-xs text-zinc-650 italic">No messages yet — say hi!</div>
@@ -538,7 +561,7 @@ export default function Game() {
                   >
                     <div
                       className={`p-2 px-3 rounded-lg max-w-[85%] ${
-                        mine ? "bg-white text-black font-semibold shadow-sm" : "bg-zinc-900 border border-zinc-800 text-white"
+                        mine ? theme.bubbleMine : theme.bubbleOpponent
                       }`}
                     >
                       <div className="text-[10px] opacity-75 font-mono mb-0.5">{msg.sender}</div>
@@ -555,9 +578,9 @@ export default function Game() {
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
                 placeholder="Type a message..."
-                className="flex-1 p-2 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-650 outline-none focus:border-zinc-500 transition-colors text-sm"
+                className={`flex-1 p-2 ${theme.inputBg} border ${theme.panelBorder} rounded-lg text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors text-sm`}
               />
-              <Button onClick={sendChat} className="bg-white hover:bg-zinc-200 text-black rounded-lg px-4 font-bold text-sm transition-colors">
+              <Button onClick={sendChat} className={`${theme.btnPrimary} rounded-lg px-4 font-bold text-sm transition-colors`}>
                 Send
               </Button>
             </div>
@@ -606,7 +629,7 @@ export default function Game() {
       {/* Game over modal (Stark Monochrome) */}
       {gameOverMessage && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 animate-fade-in">
-          <div className="bg-zinc-950 border border-zinc-800 p-10 rounded-xl text-center shadow-2xl min-w-[320px] animate-modal-pop">
+          <div className={`${theme.panelBg} border ${theme.panelBorder} p-10 rounded-xl text-center shadow-2xl min-w-[320px] animate-modal-pop`}>
             <div className="text-6xl mb-4 text-white flex justify-center">
               <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
@@ -618,7 +641,7 @@ export default function Game() {
             <p className="text-zinc-500 mb-8">Good game!</p>
             <button
               onClick={handlePlayAgain}
-              className="bg-white hover:bg-zinc-200 text-black font-bold py-3 px-10 rounded-lg transition-all duration-200 cursor-pointer text-lg shadow-xl"
+              className={`${theme.btnPrimary} font-bold py-3 px-10 rounded-lg transition-all duration-200 cursor-pointer text-lg shadow-xl`}
             >
               Play Again
             </button>
