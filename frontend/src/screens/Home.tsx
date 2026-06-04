@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { LoginSidebar } from "../components/LoginSidebar";
-import { Button } from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 
 export default function Home() {

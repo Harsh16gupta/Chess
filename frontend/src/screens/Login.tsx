@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +7,37 @@ import { useAuth } from '../context/AuthContext';
 export default function Login() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSubmit = async () => {
+    if (!email || !password) return;
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await axios.post("http://localhost:3000/api/auth/login", {
+        email,
+        password,
+      });
+
+      const { token, user } = res.data;
+
+      // Update local storage session cache
+      authLogin(user.email);
+      localStorage.setItem("token", token);
+      localStorage.setItem("rating", String(user.rating));
+
+      setStatus("success");
+      setTimeout(() => navigate("/home"), 800);
+    } catch (e: any) {
+      setStatus("error");
+      setErrorMsg(e?.response?.data?.error || e?.response?.data?.message || "Login failed. Try again.");
+    }
+  };
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -58,17 +90,37 @@ export default function Login() {
         {/* Form card */}
         <div className="bg-stone-800/80 backdrop-blur-sm border border-stone-700/40 p-8 rounded-2xl shadow-2xl">
           <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full mb-4 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
             placeholder="Username or Email"
           />
           <input
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             className="w-full mb-5 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
             placeholder="Password"
           />
-          <button className="w-full bg-lime-600 hover:bg-lime-500 p-3.5 rounded-xl text-lg font-bold cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-lime-600/25 active:scale-[0.98]">
-            Log In
+          <button
+            onClick={handleSubmit}
+            disabled={status === "loading"}
+            className={`w-full bg-lime-600 hover:bg-lime-500 p-3.5 rounded-xl text-lg font-bold cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-lime-600/25 active:scale-[0.98] ${status === "loading" ? "opacity-60 cursor-not-allowed" : ""}`}
+          >
+            {status === "loading" ? "Logging in..." : "Log In"}
           </button>
+
+          {status === "success" && (
+            <div className="mt-4 text-center text-emerald-400 font-semibold">
+              ✓ Login successful! Redirecting...
+            </div>
+          )}
+          {status === "error" && (
+            <div className="mt-4 text-center text-red-400 text-sm">
+              {errorMsg}
+            </div>
+          )}
 
           {/* Divider */}
           <div className="my-6 flex items-center gap-4">

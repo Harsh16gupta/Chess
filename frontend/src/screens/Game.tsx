@@ -36,7 +36,7 @@ export default function Game() {
 
   // Player & game state
   const [myName, setMyName] = useState<string | null>(null);
-  const [guestModalOpen, setGuestModalOpen] = useState(false);
+
   const [tempName, setTempName] = useState("");
   const [myColor, setMyColor] = useState<"white" | "black" | null>(null);
   const [players, setPlayers] = useState<{ white: string; black: string }>({
@@ -248,7 +248,7 @@ export default function Game() {
   const startMatch = (nameOverride?: string) => {
     const name = user?.email || nameOverride || myName;
     if (!name) {
-      setGuestModalOpen(true);
+      showToast("Please enter a name first.", "error");
       return;
     }
 
@@ -358,7 +358,7 @@ export default function Game() {
     const name = tempName.trim() || genGuestName();
     localStorage.setItem("guestName", name);
     setMyName(name);
-    setGuestModalOpen(false);
+
     // Immediately start the match with provided name
     startMatch(name);
   };
