@@ -8,6 +8,8 @@ import type { Square } from "chess.js";
 import { LoginSidebar } from "../components/LoginSidebar";
 import { useAuth } from "../context/AuthContext";
 import { sound } from "../utils/sound";
+import axios from "axios";
+import { stockfishEngine } from "../utils/stockfish";
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -58,6 +60,12 @@ export default function Game() {
   const [board, setBoard] = useState(chess.board());
   const [isMatching, setIsMatching] = useState(false);
 
+  // Game mode & bot settings
+  const [gameMode, setGameMode] = useState<"online" | "computer">("online");
+  const [botLevel, setBotLevel] = useState<"novice" | "intermediate" | "master">("intermediate");
+  const [playerColorPref, setPlayerColorPref] = useState<"white" | "black" | "random">("white");
+  const [isBotGame, setIsBotGame] = useState(false);
+
   // Player & game state
   const [myName, setMyName] = useState<string | null>(null);
 
@@ -68,9 +76,11 @@ export default function Game() {
     black: "Waiting...",
   });
 
-  // Moves history and active tab states
+  // Moves history, active tab, and AI coach states
   const [historyLog, setHistoryLog] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<"chat" | "moves">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "moves" | "coach">("chat");
+  const [coachFeedback, setCoachFeedback] = useState<string | null>(null);
+  const [isCoachLoading, setIsCoachLoading] = useState(false);
 
   // Unified move executor to trigger UI updates and correct sound effects
   const processMove = (moveInput: any) => {
@@ -132,6 +142,117 @@ export default function Game() {
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
   const [showWinBanner, setShowWinBanner] = useState(false);
+
+  // Start offline bot game
+  const startBotGame = () => {
+    let chosenColor: "white" | "black";
+    if (playerColorPref === "random") {
+      chosenColor = Math.random() < 0.5 ? "white" : "black";
+    } else {
+      chosenColor = playerColorPref;
+    }
+
+    setMyColor(chosenColor);
+    setIsBotGame(true);
+
+    const guestStored = localStorage.getItem("guestName");
+    const name = user?.email || guestStored || "You";
+
+    setPlayers({
+      white: chosenColor === "white" ? name : `Bot (${botLevel})`,
+      black: chosenColor === "black" ? name : `Bot (${botLevel})`,
+    });
+
+    chess.reset();
+    setBoard(chess.board());
+    setHistoryLog([]);
+    setLastMove(null);
+    setGameOverMessage(null);
+    setCurrentTurn("white");
+    
+    setTimeLeftMs({
+      white: 10 * 60 * 1000,
+      black: 10 * 60 * 1000,
+    });
+    lastSyncRef.current = Date.now();
+    setStarted(true);
+    setActiveTab("moves");
+    setCoachFeedback(null);
+  };
+
+  // AI coach analysis API integration
+  const askCoach = async () => {
+    try {
+      setIsCoachLoading(true);
+      const res = await axios.post("http://localhost:3000/api/coach/analyze", {
+        fen: chess.fen(),
+        pgn: chess.history().join(" "),
+      });
+      setCoachFeedback(res.data.analysis || null);
+    } catch (err) {
+      console.error("Coach API error:", err);
+      showToast("Could not reach the Coach. Try again shortly.", "error");
+    } finally {
+      setIsCoachLoading(false);
+    }
+  };
+
+  // Trigger Stockfish move calculation if it's the bot's turn
+  useEffect(() => {
+    if (!started || !isBotGame) return;
+
+    const isBotTurn = (myColor === "white" && currentTurn === "black") || 
+                      (myColor === "black" && currentTurn === "white");
+
+    if (!isBotTurn) return;
+
+    let active = true;
+
+    const makeBotMove = async () => {
+      let depth = 5;
+      let skill = 8;
+      if (botLevel === "novice") {
+        depth = 1;
+        skill = 0;
+      } else if (botLevel === "master") {
+        depth = 12;
+        skill = 20;
+      }
+
+      await new Promise((r) => setTimeout(r, 600));
+      if (!active) return;
+
+      const fen = chess.fen();
+      const bestMove = await stockfishEngine.getBestMove(fen, depth, skill);
+
+      if (!active || !bestMove) return;
+
+      const moveObj = {
+        from: bestMove.slice(0, 2),
+        to: bestMove.slice(2, 4),
+        promotion: bestMove[4] || undefined,
+      };
+
+      const result = processMove(moveObj);
+      if (result) {
+        setLastMove({ from: moveObj.from, to: moveObj.to });
+        setCurrentTurn(chess.turn() === "w" ? "white" : "black");
+        
+        if (chess.isCheckmate()) {
+          showToast("Checkmate!", "success");
+          triggerWinAnimation();
+        } else if (chess.inCheck()) {
+          showToast("Check!", "info");
+        }
+      }
+    };
+
+    makeBotMove();
+
+    return () => {
+      active = false;
+    };
+  }, [started, isBotGame, currentTurn, myColor, botLevel]);
 
   // initialize guest name / username
   useEffect(() => {
@@ -397,13 +518,18 @@ export default function Game() {
         return;
       }
 
-      // Send move to server
-      if (socket && (socket as any).readyState === 1) {
+      // Send move to server if NOT a bot game
+      if (!isBotGame && socket && (socket as any).readyState === 1) {
         socket.send(JSON.stringify({ type: MOVE, payload: { move: { from: selectedSquare, to: sq } } }));
       }
       setLastMove({ from: selectedSquare, to: sq });
       setSelectedSquare(null);
       setValidMoves([]);
+
+      // Update local turn state if playing vs computer
+      if (isBotGame) {
+        setCurrentTurn(chess.turn() === "w" ? "white" : "black");
+      }
 
       // Check/checkmate alerts
       if (chess.isCheckmate()) {
@@ -456,7 +582,11 @@ export default function Game() {
     chess.reset();
     setBoard(chess.board());
     setGameOverMessage(null);
-    startMatch();
+    if (isBotGame) {
+      startBotGame();
+    } else {
+      startMatch();
+    }
   };
 
   // Derived UI
@@ -555,75 +685,128 @@ export default function Game() {
           )}
         </div>
 
-        {!started && !user && (
-         <div className="flex items-center justify-center px-4">
-          <div className={`${theme.panelBg} p-6 rounded-xl border ${theme.panelBorder} w-full`}>
-            <div className="text-lg font-bold mb-3 text-white">Enter your name</div>
-            <input
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              placeholder="Your name"
-              className={`w-full p-2.5 rounded-lg mb-4 ${theme.inputBg} border ${theme.panelBorder} text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors`}
-            />
-            <Button
-              onClick={submitGuestName}
-              disabled={isMatching}
-              className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {isMatching ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="matching-spinner"></span>Finding Opponent...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                  Play
-                </span>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
+        {!started && (
+          <div className="flex items-center justify-center px-4 w-full">
+            <div className={`${theme.panelBg} p-6 rounded-xl border ${theme.panelBorder} w-full`}>
+              {/* Game Mode Tab-switch Selector */}
+              <div className="flex gap-2 mb-4 w-full">
+                <button
+                  onClick={() => setGameMode("online")}
+                  disabled={isMatching}
+                  className={`flex-1 py-2 text-center text-xs font-black rounded-lg transition-colors border cursor-pointer ${
+                    gameMode === "online"
+                      ? `${theme.badgeActive} border-transparent`
+                      : `${theme.badgeInactive} border-[#2c2b2a] hover:text-white`
+                  }`}
+                >
+                  Online Play
+                </button>
+                <button
+                  onClick={() => setGameMode("computer")}
+                  disabled={isMatching}
+                  className={`flex-1 py-2 text-center text-xs font-black rounded-lg transition-colors border cursor-pointer ${
+                    gameMode === "computer"
+                      ? `${theme.badgeActive} border-transparent`
+                      : `${theme.badgeInactive} border-[#2c2b2a] hover:text-white`
+                  }`}
+                >
+                  vs. Computer
+                </button>
+              </div>
 
-      {!started && user && (
-         <div className="px-4">
-            <Button
-              onClick={startMatch}
-              disabled={isMatching}
-              className={`w-full ${theme.btnPrimary} py-3 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {isMatching ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="matching-spinner"></span>Finding Opponent...
-                </span>
+              {gameMode === "online" ? (
+                <>
+                  {!user && (
+                    <>
+                      <div className="text-sm font-bold mb-2 text-white">Enter your name</div>
+                      <input
+                        value={tempName}
+                        onChange={(e) => setTempName(e.target.value)}
+                        placeholder="Your name"
+                        className={`w-full p-2.5 rounded-lg mb-4 ${theme.inputBg} border ${theme.panelBorder} text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors`}
+                      />
+                    </>
+                  )}
+                  <Button
+                    onClick={() => {
+                      if (!user) submitGuestName();
+                      else startMatch();
+                    }}
+                    disabled={isMatching}
+                    className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {isMatching ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="matching-spinner"></span>Finding Opponent...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                        Play Online
+                      </span>
+                    )}
+                  </Button>
+                </>
               ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                  Play
-                </span>
+                <>
+                  {/* Bot Level select */}
+                  <div className="mb-3">
+                    <label className="text-[10px] text-zinc-500 font-bold block mb-1 uppercase tracking-wider">Bot Difficulty</label>
+                    <select
+                      value={botLevel}
+                      onChange={(e) => setBotLevel(e.target.value as any)}
+                      className={`w-full p-2.5 rounded-lg ${theme.inputBg} border ${theme.panelBorder} text-white text-sm outline-none`}
+                    >
+                      <option value="novice">Novice (ELO ~800)</option>
+                      <option value="intermediate">Intermediate (ELO ~1500)</option>
+                      <option value="master">Master (ELO ~2200)</option>
+                    </select>
+                  </div>
+                  
+                  {/* Play color selection */}
+                  <div className="mb-4">
+                    <label className="text-[10px] text-zinc-500 font-bold block mb-1 uppercase tracking-wider">Play As</label>
+                    <select
+                      value={playerColorPref}
+                      onChange={(e) => setPlayerColorPref(e.target.value as any)}
+                      className={`w-full p-2.5 rounded-lg ${theme.inputBg} border ${theme.panelBorder} text-white text-sm outline-none`}
+                    >
+                      <option value="white">White</option>
+                      <option value="black">Black</option>
+                      <option value="random">Random Color</option>
+                    </select>
+                  </div>
+
+                  <Button
+                    onClick={startBotGame}
+                    className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center`}
+                  >
+                    Start Game
+                  </Button>
+                </>
               )}
-            </Button>
+            </div>
           </div>
-      )}
+        )}
 
         {started && (
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Tab switcher */}
             <div className={`flex border-b ${theme.panelBorder}`}>
-              <button
-                onClick={() => setActiveTab("chat")}
-                className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === "chat"
-                    ? "border-white text-white font-extrabold"
-                    : `${theme.textMuted} border-transparent hover:text-white`
-                }`}
-              >
-                Chat
-              </button>
+              {!isBotGame && (
+                <button
+                  onClick={() => setActiveTab("chat")}
+                  className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                    activeTab === "chat"
+                      ? "border-white text-white font-extrabold"
+                      : `${theme.textMuted} border-transparent hover:text-white`
+                  }`}
+                >
+                  Chat
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("moves")}
                 className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
@@ -634,9 +817,19 @@ export default function Game() {
               >
                 Moves
               </button>
+              <button
+                onClick={() => setActiveTab("coach")}
+                className={`flex-1 py-3 text-center text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "coach"
+                    ? "border-white text-white font-extrabold"
+                    : `${theme.textMuted} border-transparent hover:text-white`
+                }`}
+              >
+                Coach
+              </button>
             </div>
 
-            {activeTab === "chat" ? (
+            {activeTab === "chat" && !isBotGame ? (
               <div className={`flex flex-col p-3 border-t ${theme.panelBorder} flex-1 overflow-hidden`}>
                 <div className={`text-xs font-bold ${theme.textMuted} uppercase tracking-wider mb-2`}>Chat</div>
                 <div className="flex-1 overflow-y-auto mb-3 space-y-2 p-1 flex flex-col">
@@ -676,7 +869,7 @@ export default function Game() {
                   </Button>
                 </div>
               </div>
-            ) : (() => {
+            ) : activeTab === "moves" ? (() => {
               // Group historyLog into pairs
               const movePairs: { round: number; white: string; black?: string }[] = [];
               for (let i = 0; i < historyLog.length; i += 2) {
@@ -707,7 +900,63 @@ export default function Game() {
                   </div>
                 </div>
               );
-            })()}
+            })() : (
+              <div className="flex flex-col p-4 flex-1 overflow-hidden border-t border-zinc-900">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+                      <path d="M8 19h8"/>
+                      <path d="M6 22h12"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">Garry</div>
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">AI Chess Coach</div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1 mb-4 space-y-3">
+                  {coachFeedback ? (
+                    <div className={`p-3.5 rounded-xl text-sm leading-relaxed border ${theme.bubbleOpponent}`}>
+                      {coachFeedback.split("\n\n").map((para, i) => (
+                        <p key={i} className={i > 0 ? "mt-2.5" : ""}>
+                          {para}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-zinc-500 italic text-center mt-8">
+                      Click the button below to ask Coach Garry for real-time strategic advice about the current position.
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={askCoach}
+                  disabled={isCoachLoading}
+                  className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                    isCoachLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {isCoachLoading ? (
+                    <>
+                      <span className="matching-spinner shrink-0"></span>
+                      <span>Thinking...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <span>Ask Coach</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

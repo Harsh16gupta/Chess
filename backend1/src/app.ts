@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import router from './routes/auth.route';
+import coachRouter from './routes/coach.route';
 import { errorHandler } from './middlewares/errorhandler'; // check filename case too!
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(cors({
 
 // Then your routes
 app.use('/api/auth', router);
+app.use('/api/coach', coachRouter);
 
 // Then your fallback route (optional)
 app.get('/', (req, res) => res.send('Hello from Express + TypeScript'));

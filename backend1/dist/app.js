@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const auth_route_1 = __importDefault(require("./routes/auth.route"));
+const coach_route_1 = __importDefault(require("./routes/coach.route"));
 const errorhandler_1 = require("./middlewares/errorhandler"); // check filename case too!
 const app = (0, express_1.default)();
 // Use JSON parser first
@@ -16,6 +17,7 @@ app.use((0, cors_1.default)({
 }));
 // Then your routes
 app.use('/api/auth', auth_route_1.default);
+app.use('/api/coach', coach_route_1.default);
 // Then your fallback route (optional)
 app.get('/', (req, res) => res.send('Hello from Express + TypeScript'));
 // Finally the error handler — always last!
