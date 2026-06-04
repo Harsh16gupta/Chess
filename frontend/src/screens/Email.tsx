@@ -54,8 +54,13 @@ export default function Email() {
           className="text-center mb-6 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <h1 className="text-4xl font-black text-white tracking-tight">
-            ♟ Chess<span className="text-zinc-500">.in</span>
+          <h1 className="text-4xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+                <path d="M8 19h8"/>
+                <path d="M6 22h12"/>
+            </svg>
+            Chess<span className="text-zinc-500">.in</span>
           </h1>
         </div>
 

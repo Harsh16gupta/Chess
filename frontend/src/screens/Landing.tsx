@@ -56,8 +56,11 @@ export default function Landing() {
                 onClick={() => navigate("/game")}
                 className="mt-8 group relative bg-white hover:bg-zinc-200 text-black font-bold text-xl py-4 px-12 rounded-xl cursor-pointer transition-all duration-300 shadow-xl hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span className="flex items-center gap-3">
-                  ▶ Play Online
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                  Play Online
                 </span>
                 <span className="block text-sm font-normal mt-0.5 opacity-75">
                   Play with someone at your level

@@ -13,9 +13,14 @@ export const LoginSidebar = () => {
         <div className="flex flex-col justify-between w-48 bg-black text-white py-4 border-r border-zinc-900 shrink-0">
             <div className="flex flex-col gap-1">
                 <Button 
-                    className="flex justify-center items-center font-bold text-2xl p-3 cursor-pointer hover:text-zinc-300 transition-colors duration-200" 
+                    className="flex justify-center items-center gap-2 font-bold text-2xl p-3 cursor-pointer hover:text-zinc-300 transition-colors duration-200" 
                     onClick={() => navigate("/home")}>
-                    ♟ Chess.in
+                    <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+                        <path d="M8 19h8"/>
+                        <path d="M6 22h12"/>
+                    </svg>
+                    Chess.in
                 </Button>
 
                 <div className="px-2 mt-4 flex flex-col gap-1">

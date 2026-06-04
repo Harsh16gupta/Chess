@@ -319,10 +319,10 @@ export default function Game() {
 
       // Check/checkmate alerts
       if (chess.isCheckmate()) {
-        showToast("Checkmate! 👑", "success");
+        showToast("Checkmate!", "success");
         triggerWinAnimation();
       } else if (chess.inCheck()) {
-        showToast("Check! ⚠️", "info");
+        showToast("Check!", "info");
       }
     } else {
       showToast("Select one of your pieces first", "info");
@@ -448,7 +448,14 @@ export default function Game() {
       {/* right side: chat appears only when game started */}
       <div className="flex flex-col bg-zinc-950 border-l border-zinc-900 w-80">
         <div className="flex flex-col items-center pt-4 px-4 mb-4 gap-2">
-          <div className="text-xl font-bold tracking-wide text-white">♟ Chess.in</div>
+          <div className="text-xl font-bold tracking-wide text-white flex items-center justify-center gap-2">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+              <path d="M8 19h8"/>
+              <path d="M6 22h12"/>
+            </svg>
+            Chess.in
+          </div>
           <div className="flex items-center gap-2 text-sm">
             <span className={`w-2 h-2 rounded-full ${status === 'open' ? 'bg-white' : status === 'connecting' ? 'bg-zinc-500 animate-pulse' : 'bg-zinc-800'}`}></span>
             <span className="text-zinc-500">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
@@ -475,7 +482,18 @@ export default function Game() {
               disabled={isMatching}
               className={`w-full bg-white hover:bg-zinc-200 text-black py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              {isMatching ? <span className="flex items-center justify-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
+              {isMatching ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="matching-spinner"></span>Finding Opponent...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                  Play
+                </span>
+              )}
             </Button>
           </div>
         </div>
@@ -488,7 +506,18 @@ export default function Game() {
               disabled={isMatching}
               className={`w-full bg-white hover:bg-zinc-200 text-black py-3 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              {isMatching ? <span className="flex items-center justify-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
+              {isMatching ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="matching-spinner"></span>Finding Opponent...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                  Play
+                </span>
+              )}
             </Button>
           </div>
       )}
@@ -539,19 +568,38 @@ export default function Game() {
       {/* Toast notification (Sleek Stark Monochrome) */}
       {toast && (
         <div
-          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-lg shadow-2xl text-sm font-semibold border ${
+          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-lg shadow-2xl text-sm font-semibold border flex items-center gap-2 ${
             toast.type === 'error' ? 'bg-black border-white text-white' : 'bg-white border-black text-black'
           }`}
           style={{ animation: 'toastSlideIn 0.3s ease-out', transform: 'translateX(-50%)' }}
         >
-          {toast.type === 'error' ? '⚠️ ' : ''}{toast.message}
+          {toast.type === 'error' && (
+            <svg className="w-4 h-4 shrink-0 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          )}
+          {toast.message}
         </div>
       )}
 
       {/* Win celebration banner */}
       {showWinBanner && (
-        <div className="win-animation">
-          🏆 Victory 🏆
+        <div className="win-animation flex items-center justify-center gap-3">
+          <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+            <path d="M4 22h16"/>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/>
+            <path d="M12 2a4 4 0 0 0-4 4v5c0 2.2 1.8 4 4 4s4-1.8 4-4V6a4 4 0 0 0-4-4z"/>
+          </svg>
+          <span>Victory</span>
+          <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+            <path d="M4 22h16"/>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/>
+            <path d="M12 2a4 4 0 0 0-4 4v5c0 2.2 1.8 4 4 4s4-1.8 4-4V6a4 4 0 0 0-4-4z"/>
+          </svg>
         </div>
       )}
 
@@ -559,7 +607,13 @@ export default function Game() {
       {gameOverMessage && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 animate-fade-in">
           <div className="bg-zinc-950 border border-zinc-800 p-10 rounded-xl text-center shadow-2xl min-w-[320px] animate-modal-pop">
-            <div className="text-6xl mb-4 text-white">♚</div>
+            <div className="text-6xl mb-4 text-white flex justify-center">
+              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3c0 .87.37 1.66 1 2.21A6.74 6.74 0 0 0 7 13.5c0 1 .5 1.5 1.5 1.5h7c1 0 1.5-.5 1.5-1.5a6.74 6.74 0 0 0-3-6.29c.63-.55 1-1.34 1-2.21a3 3 0 0 0-3-3z"/>
+                <path d="M8 19h8"/>
+                <path d="M6 22h12"/>
+              </svg>
+            </div>
             <div className="text-3xl font-black mb-2 text-white">{gameOverMessage}</div>
             <p className="text-zinc-500 mb-8">Good game!</p>
             <button
