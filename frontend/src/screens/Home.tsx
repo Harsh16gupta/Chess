@@ -106,28 +106,10 @@ export default function Home() {
         {/* Feature Cards Section */}
         <div>
           <h2 className="text-xl font-extrabold mb-5 tracking-wide uppercase text-slate-400">Tactics & Strategy</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Puzzles */}
-            <div
-              onClick={() => navigate("/puzzle")}
-              className="group bg-[#111625]/40 hover:bg-[#111625]/80 rounded-2xl overflow-hidden border border-[#1e293b] hover:border-slate-500 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-slate-500/5 hover:translate-y-[-4px]"
-            >
-              <div className="h-44 bg-gradient-to-br from-[#1e293b]/50 to-[#0a0d14] flex items-center justify-center border-b border-[#1e293b] relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-                <svg className="w-14 h-14 stroke-slate-500 group-hover:stroke-white group-hover:scale-110 transition-all duration-500 relative z-10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-black text-slate-100 group-hover:text-white transition-colors duration-250">Puzzles</h3>
-                <p className="text-sm text-slate-400 mt-1 leading-relaxed">Sharpen your analytical skills with a set of daily interactive chess puzzles.</p>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Lessons */}
             <div
-              onClick={() => navigate("/lesson")}
+              onClick={() => navigate("/learn")}
               className="group bg-[#111625]/40 hover:bg-[#111625]/80 rounded-2xl overflow-hidden border border-[#1e293b] hover:border-slate-500 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-slate-500/5 hover:translate-y-[-4px]"
             >
               <div className="h-44 bg-gradient-to-br from-[#1e293b]/50 to-[#0a0d14] flex items-center justify-center border-b border-[#1e293b] relative overflow-hidden">
@@ -138,8 +120,8 @@ export default function Home() {
                 </svg>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-black text-slate-100 group-hover:text-white transition-colors duration-250">Lessons</h3>
-                <p className="text-sm text-slate-400 mt-1 leading-relaxed">Learn openings, key middlegame strategy, and critical endgame concepts.</p>
+                <h3 className="text-lg font-black text-slate-100 group-hover:text-white transition-colors duration-250">Chess Lessons</h3>
+                <p className="text-sm text-slate-400 mt-1 leading-relaxed">Master openings, endgame structures, and mid-game tactics (Coming Soon).</p>
               </div>
             </div>
 
@@ -150,7 +132,7 @@ export default function Home() {
             >
               <div className="h-44 bg-gradient-to-br from-[#1e293b]/50 to-[#0a0d14] flex items-center justify-center border-b border-[#1e293b] relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-                <svg className="w-14 h-14 stroke-slate-500 group-hover:stroke-white group-hover:scale-110 transition-all duration-500 relative z-10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-14 h-14 stroke-slate-500 group-hover:stroke-white group-hover:scale-110 transition-all duration-500 relative z-10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
