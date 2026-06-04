@@ -68,12 +68,21 @@ export const SideBar = () => {
                         Learn
                     </Button>
                     <Button 
-                        className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 text-zinc-400 hover:bg-zinc-900 hover:text-white`}
-                        onClick={() => navigate("/game")}>
+                        className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/watch") ? "bg-white text-black font-bold" : "text-zinc-400 hover:bg-zinc-900 hover:text-white"}`}
+                        onClick={() => navigate("/watch")}>
                         <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"/>
                         </svg>
                         Watch
+                    </Button>
+                    <Button 
+                        className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/review") ? "bg-white text-black font-bold" : "text-zinc-400 hover:bg-zinc-900 hover:text-white"}`}
+                        onClick={() => navigate("/review")}>
+                        <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Review
                     </Button>
                     <Button 
                         className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 text-zinc-400 hover:bg-zinc-900 hover:text-white`}

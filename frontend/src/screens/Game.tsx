@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "../components/Button";
 import { ChessBoard } from "../components/ChessBoard";
 import { SideBar } from "../components/SideBar";
@@ -60,8 +61,12 @@ export default function Game() {
   const [board, setBoard] = useState(chess.board());
   const [isMatching, setIsMatching] = useState(false);
 
+  const location = useLocation();
+
   // Game mode & bot settings
-  const [gameMode, setGameMode] = useState<"online" | "computer">("online");
+  const [gameMode, setGameMode] = useState<"online" | "computer">(
+    () => (location.state as any)?.mode || "online"
+  );
   const [botLevel, setBotLevel] = useState<"novice" | "intermediate" | "master">("intermediate");
   const [playerColorPref, setPlayerColorPref] = useState<"white" | "black" | "random">("white");
   const [isBotGame, setIsBotGame] = useState(false);

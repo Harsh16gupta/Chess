@@ -51,7 +51,7 @@ export default function Home() {
           <h2 className="text-xl font-extrabold mb-5 tracking-wide uppercase text-slate-400">Quick Play</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button
-              onClick={() => navigate("/game")}
+              onClick={() => navigate("/game", { state: { mode: "online" } })}
               className="group bg-[#e2e8f0] text-[#0f172a] hover:bg-[#cbd5e1] p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-white/5 flex flex-col items-center justify-center text-center"
             >
               <svg className="w-8 h-8 mb-2 text-[#0f172a] group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +62,7 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => navigate("/game")}
+              onClick={() => navigate("/game", { state: { mode: "online" } })}
               className="group bg-[#111625]/60 hover:bg-[#1e293b]/70 border border-[#1e293b] hover:border-[#334155] p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center justify-center text-center"
             >
               <svg className="w-8 h-8 mb-2 text-slate-400 group-hover:text-white group-hover:scale-110 transition-all duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
@@ -75,7 +75,7 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => navigate("/game")}
+              onClick={() => navigate("/game", { state: { mode: "online" } })}
               className="group bg-[#111625]/60 hover:bg-[#1e293b]/70 border border-[#1e293b] hover:border-[#334155] p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center justify-center text-center"
             >
               <svg className="w-8 h-8 mb-2 text-slate-400 group-hover:text-white group-hover:scale-110 transition-all duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
@@ -89,17 +89,16 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => navigate("/game")}
-              className="bg-[#0b0e17] border border-slate-900/40 opacity-40 p-6 rounded-2xl cursor-not-allowed flex flex-col items-center justify-center text-center"
-              disabled
+              onClick={() => navigate("/game", { state: { mode: "computer" } })}
+              className="group bg-[#111625]/60 hover:bg-[#1e293b]/70 border border-[#1e293b] hover:border-[#334155] p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center justify-center text-center"
             >
-              <svg className="w-8 h-8 mb-2 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-8 h-8 mb-2 text-slate-400 group-hover:text-white group-hover:scale-110 transition-all duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="10" rx="2"/>
                 <circle cx="12" cy="5" r="2"/>
                 <path d="M12 7v4"/>
               </svg>
-              <div className="font-extrabold text-lg text-slate-650 tracking-tight">Play Bots</div>
-              <div className="text-xs text-slate-700 mt-0.5">Coming soon</div>
+              <div className="font-extrabold text-lg text-slate-200 tracking-tight group-hover:text-white">Play Bots</div>
+              <div className="text-xs text-slate-500 mt-0.5">Play vs. Stockfish (Offline)</div>
             </button>
           </div>
         </div>

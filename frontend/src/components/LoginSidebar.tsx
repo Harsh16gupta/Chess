@@ -82,6 +82,16 @@ export const LoginSidebar = () => {
                     </Button>
 
                     <Button 
+                        className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 ${isActive("/review") ? "bg-[#e2e8f0] text-[#0f172a] font-bold" : "text-slate-400 hover:bg-[#111625] hover:text-slate-100"}`}
+                        onClick={() => navigate("/review")}>
+                        <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Review
+                    </Button>
+
+                    <Button 
                         className={`w-full flex justify-start items-center gap-3 font-semibold text-lg p-2.5 pl-4 cursor-pointer rounded-lg transition-all duration-200 text-slate-400 hover:bg-[#111625] hover:text-slate-100`}
                         onClick={() => setShowSettingsModal(true)}>
                         <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">

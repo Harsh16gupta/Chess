@@ -9,6 +9,10 @@ import Email from "./screens/Email";
 import './index.css';
 import './App.css';
 import Home from "./screens/Home";
+import Puzzles from "./screens/Puzzles";
+import Learn from "./screens/Learn";
+import Watch from "./screens/Watch";
+import Review from "./screens/Review";
 
 export function App() {
   return (
@@ -22,6 +26,12 @@ export function App() {
             <Route path="/signup/email" element={<Email />} />
             <Route path="/login" element={<Login />} />
             <Route path="/game" element={<Game />} />
+            <Route path="/puzzles" element={<Puzzles />} />
+            <Route path="/puzzle" element={<Puzzles />} />
+            <Route path="/learn" element={<Learn />} />
+            <Route path="/lesson" element={<Learn />} />
+            <Route path="/watch" element={<Watch />} />
+            <Route path="/review" element={<Review />} />
           </Routes>
         </Router>
       </SocketProvider>
