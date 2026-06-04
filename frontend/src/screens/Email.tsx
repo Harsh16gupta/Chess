@@ -36,100 +36,100 @@ export default function Email() {
     };
 
     return (
-        <div className="min-h-screen w-screen flex items-center justify-center bg-stone-900 relative overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute inset-0 pointer-events-none select-none">
-                <div
-                    className="absolute inset-0 opacity-15"
-                    style={{
-                        background: "radial-gradient(ellipse at 40% 40%, #4ade80 0%, transparent 50%), radial-gradient(ellipse at 60% 60%, #a3e635 0%, transparent 50%)",
-                    }}
-                />
-            </div>
+    <div className="min-h-screen w-screen flex items-center justify-center bg-black relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none select-none">
+        <div
+          className="absolute inset-0 opacity-15"
+          style={{
+            background: "radial-gradient(ellipse at 50% 50%, #27272a 0%, #000000 100%)",
+          }}
+        />
+      </div>
 
-            {/* Form */}
-            <div className="relative z-10 w-full max-w-md mx-4">
-                {/* Logo */}
-                <div
-                    className="text-center mb-6 cursor-pointer"
-                    onClick={() => navigate("/")}
-                >
-                    <h1 className="text-4xl font-black text-white tracking-tight">
-                        ♟ Chess<span className="text-lime-400">.in</span>
-                    </h1>
-                </div>
-
-                {/* Title */}
-                <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white">Create Your Account</h2>
-                    <p className="text-stone-400 mt-1">Enter your email and a password</p>
-                </div>
-
-                {/* Form card */}
-                <div className="bg-stone-800/80 backdrop-blur-sm border border-stone-700/40 p-8 rounded-2xl shadow-2xl">
-                    <div className="relative mb-4">
-                        <img
-                            src="/mail-svgrepo-com.svg"
-                            alt="Email"
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50"
-                        />
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-11 pr-4 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
-                        />
-                    </div>
-
-                    <div className="relative mb-6">
-                        <img
-                            src="/password-svgrepo-com.svg"
-                            alt="Password"
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50"
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                            className="w-full pl-11 pr-4 p-3.5 bg-stone-700/60 border border-stone-600/30 rounded-xl text-white placeholder-stone-400 outline-none focus:border-lime-500/50 transition-colors"
-                        />
-                    </div>
-
-                    <button
-                        onClick={handleSubmit}
-                        disabled={status === "loading"}
-                        className={`w-full bg-lime-600 hover:bg-lime-500 p-3.5 rounded-xl text-lg font-bold cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-lime-600/25 active:scale-[0.98] ${status === "loading" ? "opacity-60 cursor-not-allowed" : ""}`}
-                    >
-                        {status === "loading" ? "Creating account..." : "Continue"}
-                    </button>
-
-                    {/* Status messages */}
-                    {status === "success" && (
-                        <div className="mt-4 text-center text-emerald-400 font-semibold">
-                            ✓ Account created! Redirecting...
-                        </div>
-                    )}
-                    {status === "error" && (
-                        <div className="mt-4 text-center text-red-400 text-sm">
-                            {errorMsg}
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <p className="text-center text-stone-500 text-sm mt-6">
-                    Already have an account?{" "}
-                    <span
-                        onClick={() => navigate("/login")}
-                        className="text-lime-400 hover:text-lime-300 cursor-pointer font-semibold transition-colors"
-                    >
-                        Log In
-                    </span>
-                </p>
-            </div>
+      {/* Form */}
+      <div className="relative z-10 w-full max-w-md mx-4">
+        {/* Logo */}
+        <div
+          className="text-center mb-6 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          <h1 className="text-4xl font-black text-white tracking-tight">
+            ♟ Chess<span className="text-zinc-500">.in</span>
+          </h1>
         </div>
+
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white">Create Your Account</h2>
+          <p className="text-zinc-500 mt-1">Enter your email and a password</p>
+        </div>
+
+        {/* Form card */}
+        <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-xl shadow-2xl">
+          <div className="relative mb-4">
+            <img
+              src="/mail-svgrepo-com.svg"
+              alt="Email"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-40 filter grayscale"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-11 pr-4 p-3.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-500 outline-none focus:border-white transition-colors"
+            />
+          </div>
+
+          <div className="relative mb-6">
+            <img
+              src="/password-svgrepo-com.svg"
+              alt="Password"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-40 filter grayscale"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              className="w-full pl-11 pr-4 p-3.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-500 outline-none focus:border-white transition-colors"
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={status === "loading"}
+            className={`w-full bg-white hover:bg-zinc-200 text-black p-3.5 rounded-lg text-lg font-bold cursor-pointer transition-all duration-200 hover:shadow-lg active:scale-[0.98] ${status === "loading" ? "opacity-60 cursor-not-allowed" : ""}`}
+          >
+            {status === "loading" ? "Creating account..." : "Continue"}
+          </button>
+
+          {/* Status messages */}
+          {status === "success" && (
+            <div className="mt-4 p-3 bg-zinc-900 border border-zinc-850 rounded-lg text-center text-white font-semibold text-sm">
+              ✓ Account created! Redirecting...
+            </div>
+          )}
+          {status === "error" && (
+            <div className="mt-4 p-3 bg-zinc-900 border border-zinc-850 rounded-lg text-center text-zinc-400 text-sm">
+              {errorMsg}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-zinc-500 text-sm mt-6">
+          Already have an account?{" "}
+          <span
+            onClick={() => navigate("/login")}
+            className="text-white hover:underline cursor-pointer font-semibold transition-colors"
+          >
+            Log In
+          </span>
+        </p>
+      </div>
+    </div>
     );
 }

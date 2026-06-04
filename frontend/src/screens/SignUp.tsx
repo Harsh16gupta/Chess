@@ -30,17 +30,17 @@ export default function SignUp() {
   });
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-stone-900 relative overflow-hidden">
-      {/* Background decoration */}
+    <div className="min-h-screen w-screen flex items-center justify-center bg-black relative overflow-hidden">
+      {/* Grayscale background decoration */}
       <div className="absolute inset-0 pointer-events-none select-none">
         <div
           className="absolute inset-0 opacity-15"
           style={{
-            background: "radial-gradient(ellipse at 30% 30%, #4ade80 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, #a3e635 0%, transparent 50%)",
+            background: "radial-gradient(ellipse at 50% 50%, #27272a 0%, #000000 100%)",
           }}
         />
-        <span className="absolute text-[10rem] opacity-[0.03] top-[10%] right-[10%] rotate-[12deg]">♛</span>
-        <span className="absolute text-[8rem] opacity-[0.03] bottom-[10%] left-[10%] rotate-[-8deg]">♝</span>
+        <span className="absolute text-[10rem] opacity-[0.03] text-white top-[10%] right-[10%] rotate-[12deg]">♛</span>
+        <span className="absolute text-[8rem] opacity-[0.03] text-white bottom-[10%] left-[10%] rotate-[-8deg]">♝</span>
       </div>
 
       {/* Sign Up Card */}
@@ -51,20 +51,20 @@ export default function SignUp() {
           onClick={() => navigate("/")}
         >
           <h1 className="text-4xl font-black text-white tracking-tight">
-            ♟ Chess<span className="text-lime-400">.in</span>
+            ♟ Chess<span className="text-zinc-500">.in</span>
           </h1>
         </div>
 
         {/* Title */}
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-white">Create Your Account</h2>
-          <p className="text-stone-400 mt-2">Join the game in seconds</p>
+          <p className="text-zinc-500 mt-2">Join the game in seconds</p>
         </div>
 
-        {/* Pawn image */}
+        {/* Pawn image (grayscale filter applied) */}
         <div className="flex justify-center mb-6">
           <img
-            className="w-36 drop-shadow-lg"
+            className="w-36 drop-shadow-lg filter grayscale"
             src="/pawn-on-board.png"
             alt="Chess piece"
           />
@@ -74,26 +74,26 @@ export default function SignUp() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => navigate('/signup/email')}
-            className="w-full bg-lime-600 hover:bg-lime-500 text-white text-lg font-bold py-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-lime-600/25 active:scale-[0.98]"
+            className="w-full bg-white hover:bg-zinc-200 text-black text-lg font-bold py-4 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-lg active:scale-[0.98]"
           >
             ✉ Continue with Email
           </button>
 
           <button
             onClick={() => googleSignUp()}
-            className="w-full bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/40 text-white text-lg font-bold py-4 rounded-xl cursor-pointer flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
+            className="w-full bg-black hover:bg-zinc-900 border border-zinc-800 text-white text-lg font-bold py-4 rounded-lg cursor-pointer flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
           >
-            <img src="/google-icon.svg" alt="Google" className="h-5 w-5" />
+            <img src="/google-icon.svg" alt="Google" className="h-5 w-5 filter grayscale" />
             Continue with Google
           </button>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-stone-500 text-sm mt-6">
+        <p className="text-center text-zinc-500 text-sm mt-6">
           Already have an account?{" "}
           <span
             onClick={() => navigate("/login")}
-            className="text-lime-400 hover:text-lime-300 cursor-pointer font-semibold transition-colors"
+            className="text-white hover:underline cursor-pointer font-semibold transition-colors"
           >
             Log In
           </span>
