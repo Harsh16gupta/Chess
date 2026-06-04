@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 
-const WS_URL = "ws://localhost:8080";
+// ── WebSocket URL ───────────────────────────────────────────────────
+// Uses the same port as the HTTP server, with /ws path.
+// In production, change this via VITE_WS_URL env var.
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3000/ws";
 const MAX_DELAY = 10_000;
 
 interface SocketContextType {
@@ -27,12 +30,23 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     unmountedRef.current = false;
 
+    // Only connect if the user is logged in.
+    // Auth is required for all WebSocket connections.
+    const token = localStorage.getItem("token");
+    if (!user || !token) {
+      // Not logged in — don't even try to connect.
+      setSocket(null);
+      setIsConnected(false);
+      return;
+    }
+
     function connect() {
       if (unmountedRef.current) return;
 
-      const token = localStorage.getItem("token");
-      // Pass the JWT in the URL query parameters so the server can validate it during connection handshake.
-      const url = token ? `${WS_URL}?token=${token}` : WS_URL;
+      const currentToken = localStorage.getItem("token");
+      if (!currentToken) return;
+
+      const url = `${WS_URL}?token=${currentToken}`;
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
@@ -45,12 +59,18 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         setIsConnected(true);
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         if (unmountedRef.current) return;
         setSocket(null);
         setIsConnected(false);
 
-        // Exponential backoff to avoid flooding the server on disconnect
+        // Code 4001 = auth failure. Don't retry — the token is invalid.
+        if (event.code === 4001) {
+          console.warn("WebSocket auth failed — not retrying");
+          return;
+        }
+
+        // Exponential backoff to avoid flooding the server on disconnect.
         const delay = Math.min(1000 * 2 ** retriesRef.current, MAX_DELAY);
         retriesRef.current++;
         timerRef.current = window.setTimeout(connect, delay);
@@ -77,7 +97,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       });
       setIsConnected(false);
     };
-  }, [user]); // Automatically reconnects with credentials when the user logs in or out.
+  }, [user]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

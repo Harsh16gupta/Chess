@@ -27,9 +27,7 @@ function formatTime(totalSeconds: number) {
   return `${mins}:${secs}`;
 }
 
-function genGuestName() {
-  return `Guest${Math.floor(1000 + Math.random() * 9000)}`;
-}
+// Guest play removed — online requires login.
 
 export default function Game() {
   const { user } = useAuth();
@@ -271,16 +269,11 @@ export default function Game() {
     };
   }, [started, isBotGame, currentTurn, myColor, botLevel]);
 
-  // initialize guest name / username
+  // Set player name from auth context.
   useEffect(() => {
     if (user?.email) {
       setMyName(user.email);
-      return;
-    }
-    const stored = localStorage.getItem("guestName");
-    if (stored) setMyName(stored);
-    else {
-      // delay opening modal until user tries to play (so modal doesn't annoy)
+    } else {
       setMyName(null);
     }
   }, [user?.email]);
@@ -470,11 +463,10 @@ export default function Game() {
     toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3000);
   };
 
-  // Start matchmaking flow
-  const startMatch = (nameOverride?: string) => {
-    const name = user?.email || nameOverride || myName;
-    if (!name) {
-      showToast("Please enter a name first.", "error");
+  // Start matchmaking flow — requires authentication.
+  const startMatch = () => {
+    if (!user?.email) {
+      showToast("Please log in to play online.", "error");
       return;
     }
 
@@ -483,15 +475,12 @@ export default function Game() {
       return;
     }
 
-    // set matching state true
     setIsMatching(true);
-
-    if (!user?.email) localStorage.setItem("guestName", name);
 
     socket.send(
       JSON.stringify({
         type: INIT_GAME,
-        payload: { name },
+        payload: { name: user.email },
       })
     );
   };
@@ -584,15 +573,7 @@ export default function Game() {
 
 
 
-  // Guest modal submit
-  const submitGuestName = () => {
-    const name = tempName.trim() || genGuestName();
-    localStorage.setItem("guestName", name);
-    setMyName(name);
-
-    // Immediately start the match with provided name
-    startMatch(name);
-  };
+  // Guest modal removed — online play requires login.
 
   // Play again
   const handlePlayAgain = () => {
@@ -733,38 +714,33 @@ export default function Game() {
 
               {gameMode === "online" ? (
                 <>
-                  {!user && (
-                    <>
-                      <div className="text-sm font-bold mb-2 text-white">Enter your name</div>
-                      <input
-                        value={tempName}
-                        onChange={(e) => setTempName(e.target.value)}
-                        placeholder="Your name"
-                        className={`w-full p-2.5 rounded-lg mb-4 ${theme.inputBg} border ${theme.panelBorder} text-white placeholder-zinc-650 outline-none ${theme.inputFocus} transition-colors`}
-                      />
-                    </>
+                  {!user ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-zinc-400 mb-4">Log in to play online matches</p>
+                      <a href="/login" className={`inline-block ${theme.btnPrimary} py-2.5 px-6 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center`}>
+                        Log In
+                      </a>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => startMatch()}
+                      disabled={isMatching}
+                      className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {isMatching ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="matching-spinner"></span>Finding Opponent...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                          Play Online
+                        </span>
+                      )}
+                    </Button>
                   )}
-                  <Button
-                    onClick={() => {
-                      if (!user) submitGuestName();
-                      else startMatch();
-                    }}
-                    disabled={isMatching}
-                    className={`w-full ${theme.btnPrimary} py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    {isMatching ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="matching-spinner"></span>Finding Opponent...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                        Play Online
-                      </span>
-                    )}
-                  </Button>
                 </>
               ) : (
                 <>
