@@ -88,12 +88,19 @@ export class Game {
     const now = Date.now();
     const elapsed = now - this.lastMoveTime;
 
-    // Subtract elapsed time from the player who just moved (turnBeforeMove).
-    // Example: if turnBeforeMove === 'white', white is about to move and will be the one using elapsed time.
+    /*
+     * LAZY TIMER CALCULATION DESIGN:
+     * - Instead of running active intervals (setInterval) on the server for each game,
+     *   remaining time is calculated lazily whenever a move is submitted.
+     * - The time spent (`elapsed`) since the last move is subtracted from the player 
+     *   whose turn it was.
+     * - LIMITATION: If a player runs out of time while idle, the server does not actively
+     *   end the game until a move is attempted.
+     */
     this.timeLeft[turnBeforeMove] -= elapsed;
     this.lastMoveTime = now;
 
-    // If the player ran out of time BEFORE making this move, treat as timeout (they lost).
+    // Verify flag-fall: if remaining time is negative, the moving player timed out.
     if (this.timeLeft[turnBeforeMove] <= 0) {
       const winner: Color = turnBeforeMove === "white" ? "black" : "white";
       const winnerName = winner === "white" ? this.name1 : this.name2;
