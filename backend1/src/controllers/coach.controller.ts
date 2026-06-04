@@ -29,8 +29,8 @@ export const analyzePosition = async (req: Request, res: Response, next: NextFun
     // Initialize the Gemini API client
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using gemini-1.5-flash for fast, responsive natural language generation
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Using gemini-2.5-flash for fast, responsive natural language generation
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Craft a highly contextual prompt for the chess coach
     const prompt = `You are Garry, a friendly and experienced Grandmaster chess coach. 
