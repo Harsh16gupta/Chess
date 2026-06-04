@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { userSchema } from '../schemas/user.schema';
 import { comparePassword, hashPassword } from '../utils/hash';
+import prisma from '../utils/prisma';
+import { env } from '../utils/env';
+import { authLog } from '../utils/logger';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 export const signup = async (req: Request, res: Response) => {
     const result = userSchema.safeParse(req.body);
 
@@ -34,7 +34,7 @@ export const signup = async (req: Request, res: Response) => {
 
         const token = jwt.sign(
             { userId: newUser.id },
-            process.env.JWT_SECRET as string,
+            env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
@@ -51,7 +51,7 @@ export const signup = async (req: Request, res: Response) => {
         });
 
     } catch (e) {
-        console.error(e);
+        authLog.error(e);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -74,7 +74,7 @@ export const login = async (req: Request, res: Response) => {
         // ✅ Generate JWT
         const token = jwt.sign(
             { userId: user.id },
-            process.env.JWT_SECRET as string,
+            env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
@@ -95,7 +95,7 @@ export const login = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error(error);
+        authLog.error(error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
