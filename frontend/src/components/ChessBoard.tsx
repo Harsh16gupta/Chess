@@ -23,13 +23,13 @@ function getPieceImage(color: Color, type: PieceSymbol): string {
   return `/${prefix}${type.toUpperCase()}.png`;
 }
 
-// ─── Square colors ──────────────────────────────────────────
-const LIGHT_SQUARE = "#ebecd0";   // warm cream
-const DARK_SQUARE = "#779556";    // forest green
-const SELECTED_LIGHT = "#f6f669"; // bright yellow
-const SELECTED_DARK = "#baca2b";  // olive yellow
-const LAST_MOVE_LIGHT = "#f5f682";
-const LAST_MOVE_DARK = "#b9ca43";
+// ─── Square colors (Stark Black & White Redesign) ───────────
+const LIGHT_SQUARE = "#f4f4f5";   // Zinc 100 (crisp light zinc)
+const DARK_SQUARE = "#27272a";    // Zinc 800 (deep charcoal zinc)
+const SELECTED_LIGHT = "#a1a1aa"; // Zinc 400 (mid-gray selection highlight)
+const SELECTED_DARK = "#71717a";  // Zinc 500 (darker-gray selection highlight)
+const LAST_MOVE_LIGHT = "#e4e4e7"; // Zinc 200
+const LAST_MOVE_DARK = "#3f3f46";  // Zinc 700
 
 function getSquareColor(
   row: number,
@@ -119,12 +119,16 @@ export const ChessBoard = ({
 
                 {/* Valid move indicator */}
                 {isValidTarget && !hasPiece && (
-                  <div className="absolute w-[28%] h-[28%] rounded-full bg-black/20 pointer-events-none" />
+                  <div className={`absolute w-[28%] h-[28%] rounded-full pointer-events-none ${
+                    (actualRow + actualCol) % 2 === 0 ? "bg-black/20" : "bg-white/20"
+                  }`} />
                 )}
 
                 {/* Valid capture indicator (ring around enemy piece) */}
                 {isValidTarget && hasPiece && (
-                  <div className="absolute inset-[6%] rounded-full border-[3px] border-black/25 pointer-events-none" />
+                  <div className={`absolute inset-[6%] rounded-full border-[3px] pointer-events-none ${
+                    (actualRow + actualCol) % 2 === 0 ? "border-black/25" : "border-white/25"
+                  }`} />
                 )}
 
                 {/* Piece image */}

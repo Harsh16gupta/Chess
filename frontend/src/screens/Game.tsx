@@ -376,41 +376,40 @@ export default function Game() {
   const blackSeconds = Math.max(0, Math.floor(timeLeftMs.black / 1000));
   const isMyTurn = myColor === currentTurn;
 
-  // Board size class: smaller (85vmin) so top & bottom bars fit
+  // Board size class: smaller (85vmin) so top & bottom   // Board size class: smaller (85vmin) so top & bottom bars fit
   // Player bars above and below board are fixed-height so both names show
   return (
-    <div className="flex h-screen w-screen bg-stone-800 text-white">
+    <div className="flex h-screen w-screen bg-black text-white">
       {!user ? <SideBar /> : <LoginSidebar />}
-      
 
-      <div className="flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative">
-        
-
+      <div className="flex-1 flex flex-col items-center py-2 px-4 md:px-8 relative bg-black">
         {/* center game area */}
-        <div className="flex flex-col items-center ">
+        <div className="flex flex-col items-center">
           {/* top player bar */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-t-xl flex items-center justify-between ${
-              currentTurn === "black" ? "bg-yellow-700" : "bg-stone-700"
+            className={`w-full max-w-3xl p-2 rounded-t-xl flex items-center justify-between transition-colors duration-200 border border-zinc-900 ${
+              currentTurn === "black" ? "bg-white text-black font-bold" : "bg-zinc-950 text-zinc-400"
             }`}
             style={{ height: 48 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
+                currentTurn === "black" ? "bg-black text-white" : "bg-zinc-800 text-white"
+              }`}>
                 {players.black?.slice(0, 2).toUpperCase() || "BL"}
               </div>
               <div className="flex flex-col">
                 <div className="text-sm">{players.black || "Waiting..."}</div>
-                <div className="text-xs text-gray-200">Black</div>
+                <div className="text-xs opacity-75">Black</div>
               </div>
             </div>
-            <div className={`text-lg font-bold ${blackSeconds < 10 ? "text-red-400" : ""}`}>
+            <div className="text-lg font-mono font-bold">
               {formatTime(blackSeconds)}
             </div>
           </div>
 
           {/* board container (smaller so both bars visible) */}
-          <div className=" " style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
+          <div className="border-x border-zinc-900" style={{ width: "85vmin", height: "85vmin", maxWidth: 720, maxHeight: 720 }}>
             <ChessBoard
               board={board}
               flipped={myColor === "black"}
@@ -419,165 +418,153 @@ export default function Game() {
               lastMove={lastMove}
               onSquareClick={onSquareClick}
             />
-
           </div>
 
           {/* bottom player bar */}
           <div
-            className={`w-full max-w-3xl p-2 rounded-b-xl flex items-center justify-between ${
-              currentTurn === "white" ? "bg-yellow-700" : "bg-stone-700"
+            className={`w-full max-w-3xl p-2 rounded-b-xl flex items-center justify-between transition-colors duration-200 border border-zinc-900 ${
+              currentTurn === "white" ? "bg-white text-black font-bold" : "bg-zinc-950 text-zinc-400"
             }`}
             style={{ height: 48 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
+                currentTurn === "white" ? "bg-black text-white" : "bg-zinc-800 text-white"
+              }`}>
                 {players.white?.slice(0, 2).toUpperCase() || "WH"}
               </div>
               <div className="flex flex-col">
                 <div className="text-sm">{players.white || "Waiting..."}</div>
-                <div className="text-xs text-gray-200">White</div>
+                <div className="text-xs opacity-75">White</div>
               </div>
             </div>
-            <div className={`text-lg font-bold ${whiteSeconds < 10 ? "text-red-400" : ""}`}>
+            <div className="text-lg font-mono font-bold">
               {formatTime(whiteSeconds)}
             </div>
           </div>
-
-          
         </div>
       </div>
 
       {/* right side: chat appears only when game started */}
-      <div className="flex flex-col bg-stone-900 m-4 rounded-md w-80">
+      <div className="flex flex-col bg-zinc-950 border-l border-zinc-900 w-80">
         <div className="flex flex-col items-center pt-4 px-4 mb-4 gap-2">
-          <div className="text-xl font-bold tracking-wide">♟ Chess.in</div>
+          <div className="text-xl font-bold tracking-wide text-white">♟ Chess.in</div>
           <div className="flex items-center gap-2 text-sm">
-            <span className={`w-2 h-2 rounded-full ${status === 'open' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`}></span>
-            <span className="text-gray-400">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
+            <span className={`w-2 h-2 rounded-full ${status === 'open' ? 'bg-white' : status === 'connecting' ? 'bg-zinc-500 animate-pulse' : 'bg-zinc-800'}`}></span>
+            <span className="text-zinc-500">{status === 'open' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
           </div>
           {started && (
-            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full ${isMyTurn ? 'bg-lime-600/30 text-lime-300' : 'bg-stone-700 text-gray-400'}`}>
+            <div className={`text-sm font-semibold mt-1 px-3 py-1 rounded-full transition-colors ${isMyTurn ? 'bg-white text-black font-bold shadow-sm' : 'bg-zinc-900 border border-zinc-800 text-zinc-500'}`}>
               {isMyTurn ? "Your turn" : "Opponent's turn"}
             </div>
           )}
         </div>
+
         {!started && !user && (
-         <div className=" flex items-center justify-center ">
-          <div className="bg-stone-900 p-6 rounded-md w-80">
-            <div className="text-xl font-bold mb-3">Enter your name</div>
+         <div className="flex items-center justify-center px-4">
+          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 w-full">
+            <div className="text-lg font-bold mb-3 text-white">Enter your name</div>
             <input
               value={tempName}
               onChange={(e) => setTempName(e.target.value)}
               placeholder="Your name"
-              className="w-full p-2 rounded mb-3 bg-stone-800 text-white"
+              className="w-full p-2.5 rounded-lg mb-4 bg-black border border-zinc-800 text-white placeholder-zinc-600 outline-none focus:border-white transition-colors"
             />
-            <div className="flex justify-center gap-2  my-1 bg-lime-500 text-2xl">
-              <Button
-                onClick={submitGuestName}
-                disabled={isMatching}
-                className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
-              </Button>
-
-            </div>
+            <Button
+              onClick={submitGuestName}
+              disabled={isMatching}
+              className={`w-full bg-white hover:bg-zinc-200 text-black py-2.5 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {isMatching ? <span className="flex items-center justify-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
+            </Button>
           </div>
         </div>
       )}
 
       {!started && user && (
-         <div className="flex justify-center gap-2 m-5 bg-lime-500 text-2xl">
-              <Button
-                onClick={startMatch}
-                disabled={isMatching}
-                className={`cursor-pointer  ${isMatching ? "opacity-50 cursor-not-allowed w-xl bg-lime-500" : ""}`}
-              >
-                {isMatching ? <span className="flex items-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
-              </Button>
-
-            </div>
+         <div className="px-4">
+            <Button
+              onClick={startMatch}
+              disabled={isMatching}
+              className={`w-full bg-white hover:bg-zinc-200 text-black py-3 rounded-lg font-bold transition-all duration-200 cursor-pointer text-center ${isMatching ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {isMatching ? <span className="flex items-center justify-center gap-2"><span className="matching-spinner"></span>Finding Opponent...</span> : "▶ Play"}
+            </Button>
+          </div>
       )}
-        
 
         {started && (
-          <div className="flex flex-col p-2 border-t border-gray-600 flex-1">
-            <div className="text-sm text-gray-300 mb-2">Chat</div>
-              <div className="flex-1 overflow-y-auto mb-2 space-y-2 p-1 flex flex-col">
-                {chatMessages.length === 0 && (
-                  <div className="text-xs text-gray-400">No messages yet — say hi!</div>
-                )}
-                {chatMessages.map((msg, i) => {
-                  const mine = msg.sender === (myName || user?.email);
-                  return (
+          <div className="flex flex-col p-3 border-t border-zinc-900 flex-1 overflow-hidden">
+            <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Chat</div>
+            <div className="flex-1 overflow-y-auto mb-3 space-y-2 p-1 flex flex-col">
+              {chatMessages.length === 0 && (
+                <div className="text-xs text-zinc-650 italic">No messages yet — say hi!</div>
+              )}
+              {chatMessages.map((msg, i) => {
+                const mine = msg.sender === (myName || user?.email);
+                return (
+                  <div
+                    key={i}
+                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                  >
                     <div
-                      key={i}
-                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      className={`p-2 px-3 rounded-lg max-w-[85%] ${
+                        mine ? "bg-white text-black font-semibold shadow-sm" : "bg-zinc-900 border border-zinc-800 text-white"
+                      }`}
                     >
-                      <div
-                        className={`p-1 px-4 rounded max-w-[70%] ${
-                          mine ? "bg-lime-700 text-black" : "bg-stone-700 text-white"
-                        }`}
-                      >
-                        <div className="text-xs font-bold">{msg.sender}</div>
-                        <div className="text-sm">{msg.message}</div>
-                      </div>
+                      <div className="text-[10px] opacity-75 font-mono mb-0.5">{msg.sender}</div>
+                      <div className="text-sm leading-relaxed">{msg.message}</div>
                     </div>
-                  );
+                  </div>
+                );
               })}
             </div>
 
-
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               <input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
                 placeholder="Type a message..."
-                className="flex-1 p-2 rounded-l bg-stone-800 text-white border border-gray-600"
+                className="flex-1 p-2 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-650 outline-none focus:border-zinc-500 transition-colors text-sm"
               />
-              <Button onClick={sendChat} className="bg-lime-600 text-white rounded-r px-4">
+              <Button onClick={sendChat} className="bg-white hover:bg-zinc-200 text-black rounded-lg px-4 font-bold text-sm transition-colors">
                 Send
-                
-
               </Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Toast notification */}
+      {/* Toast notification (Sleek Stark Monochrome) */}
       {toast && (
         <div
-          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-xl shadow-2xl text-sm font-semibold backdrop-blur-md border ${
-            toast.type === 'error' ? 'bg-red-500/20 border-red-500/40 text-red-200' :
-            toast.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200' :
-            'bg-sky-500/20 border-sky-500/40 text-sky-200'
+          className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-lg shadow-2xl text-sm font-semibold border ${
+            toast.type === 'error' ? 'bg-black border-white text-white' : 'bg-white border-black text-black'
           }`}
           style={{ animation: 'toastSlideIn 0.3s ease-out', transform: 'translateX(-50%)' }}
         >
-          {toast.message}
+          {toast.type === 'error' ? '⚠️ ' : ''}{toast.message}
         </div>
       )}
 
       {/* Win celebration banner */}
       {showWinBanner && (
         <div className="win-animation">
-          🏆 Victory! 🏆
+          🏆 Victory 🏆
         </div>
       )}
 
-      {/* Game over modal */}
+      {/* Game over modal (Stark Monochrome) */}
       {gameOverMessage && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="bg-stone-800 border border-stone-600/50 p-10 rounded-2xl text-center shadow-2xl min-w-[320px]"
-            style={{ animation: 'modalPop 0.35s ease-out' }}>
-            <div className="text-6xl mb-4">♚</div>
-            <div className="text-3xl font-bold mb-2">{gameOverMessage}</div>
-            <p className="text-gray-400 mb-8">Good game!</p>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 animate-fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 p-10 rounded-xl text-center shadow-2xl min-w-[320px] animate-modal-pop">
+            <div className="text-6xl mb-4 text-white">♚</div>
+            <div className="text-3xl font-black mb-2 text-white">{gameOverMessage}</div>
+            <p className="text-zinc-500 mb-8">Good game!</p>
             <button
               onClick={handlePlayAgain}
-              className="bg-lime-600 hover:bg-lime-500 text-white font-bold py-3 px-10 rounded-xl transition-colors duration-200 cursor-pointer text-lg shadow-lg shadow-lime-600/25"
+              className="bg-white hover:bg-zinc-200 text-black font-bold py-3 px-10 rounded-lg transition-all duration-200 cursor-pointer text-lg shadow-xl"
             >
               Play Again
             </button>
