@@ -99,3 +99,52 @@ export const login = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// ── Google OAuth Login ──────────────────────────────────────────────
+// Frontend sends Google user info after getting it from Google's API.
+// We find or create the user in our DB, then return a JWT so the
+// WebSocket can authenticate them.
+export const googleLogin = async (req: Request, res: Response) => {
+    const { email, name, picture } = req.body;
+
+    if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        // Find existing user or create a new one.
+        // Google users don't have a password — they auth via Google.
+        let user = await prisma.user.findUnique({ where: { Email: email } });
+
+        if (!user) {
+            user = await prisma.user.create({
+                data: {
+                    Email: email,
+                    Password: '', // no password for Google users
+                    Rating: 1200,
+                },
+            });
+            authLog.info({ email }, 'new Google user created');
+        }
+
+        const token = jwt.sign(
+            { userId: user.id },
+            env.JWT_SECRET,
+            { expiresIn: '7d' } // longer expiry for Google users
+        );
+
+        return res.status(200).json({
+            token,
+            user: {
+                id: user.id,
+                email: user.Email,
+                rating: user.Rating || 1200,
+                name: name || undefined,
+                picture: picture || undefined,
+            },
+        });
+    } catch (error) {
+        authLog.error(error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export default function SignUp() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -10,17 +13,27 @@ export default function SignUp() {
   const googleSignUp = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
 
-        const { email, name, picture } = res.data;
+        const { email, name, picture } = googleRes.data;
+
+        // Get a JWT from our backend (creates the user if new).
+        const backendRes = await axios.post(`${API_URL}/api/auth/google`, {
+          email, name, picture,
+        });
+
+        const { token, user } = backendRes.data;
+
+        localStorage.setItem("token", token);
+        localStorage.setItem("rating", String(user.rating));
+        localStorage.setItem("googleUser", JSON.stringify(googleRes.data));
 
         authLogin(email, { name, picture });
-        localStorage.setItem("googleUser", JSON.stringify(res.data));
         navigate("/home");
       } catch (err) {
-        console.error("Failed to fetch Google user", err);
+        console.error("Google sign up failed", err);
       }
     },
     onError: () => {

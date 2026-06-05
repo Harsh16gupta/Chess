@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.signup = void 0;
+exports.googleLogin = exports.login = exports.signup = void 0;
 const user_schema_1 = require("../schemas/user.schema");
 const hash_1 = require("../utils/hash");
 const prisma_1 = __importDefault(require("../utils/prisma"));
@@ -87,3 +87,45 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
+// ── Google OAuth Login ──────────────────────────────────────────────
+// Frontend sends Google user info after getting it from Google's API.
+// We find or create the user in our DB, then return a JWT so the
+// WebSocket can authenticate them.
+const googleLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, name, picture } = req.body;
+    if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+    try {
+        // Find existing user or create a new one.
+        // Google users don't have a password — they auth via Google.
+        let user = yield prisma_1.default.user.findUnique({ where: { Email: email } });
+        if (!user) {
+            user = yield prisma_1.default.user.create({
+                data: {
+                    Email: email,
+                    Password: '', // no password for Google users
+                    Rating: 1200,
+                },
+            });
+            logger_1.authLog.info({ email }, 'new Google user created');
+        }
+        const token = jsonwebtoken_1.default.sign({ userId: user.id }, env_1.env.JWT_SECRET, { expiresIn: '7d' } // longer expiry for Google users
+        );
+        return res.status(200).json({
+            token,
+            user: {
+                id: user.id,
+                email: user.Email,
+                rating: user.Rating || 1200,
+                name: name || undefined,
+                picture: picture || undefined,
+            },
+        });
+    }
+    catch (error) {
+        logger_1.authLog.error(error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+exports.googleLogin = googleLogin;

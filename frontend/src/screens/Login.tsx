@@ -4,6 +4,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export default function Login() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -19,7 +22,7 @@ export default function Login() {
     setErrorMsg("");
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/login", {
+      const res = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -42,16 +45,31 @@ export default function Login() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        // Get user info from Google.
+        const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
-        const { email, name, picture } = res.data;
+        const { email, name, picture } = googleRes.data;
+
+        // Send to our backend to get a JWT token.
+        // This creates the user in our DB if they don't exist.
+        const backendRes = await axios.post(`${API_URL}/api/auth/google`, {
+          email, name, picture,
+        });
+
+        const { token, user } = backendRes.data;
+
+        // Store JWT so the WebSocket can authenticate.
+        localStorage.setItem("token", token);
+        localStorage.setItem("rating", String(user.rating));
+        localStorage.setItem("googleUser", JSON.stringify(googleRes.data));
 
         authLogin(email, { name, picture });
-        localStorage.setItem("googleUser", JSON.stringify(res.data));
         navigate("/home");
       } catch (err) {
-        console.error("Failed to fetch Google user", err);
+        console.error("Google login failed", err);
+        setStatus("error");
+        setErrorMsg("Google login failed. Please try again.");
       }
     },
     onError: () => {

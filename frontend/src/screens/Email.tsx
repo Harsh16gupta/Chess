@@ -3,6 +3,9 @@ import { useState } from "react";
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export default function Email() {
     const navigate = useNavigate();
     const { login } = useAuth();
@@ -16,7 +19,7 @@ export default function Email() {
         setStatus("loading");
 
         try {
-            const res = await axios.post('http://localhost:3000/api/auth/signup', {
+            const res = await axios.post(`${API_URL}/api/auth/signup`, {
                 email,
                 password,
             });
