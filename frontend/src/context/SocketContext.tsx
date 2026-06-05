@@ -4,9 +4,7 @@ import { useAuth } from './AuthContext';
 // ── WebSocket URL ───────────────────────────────────────────────────
 // Uses the same port as the HTTP server, with /ws path.
 // In production, change this via VITE_WS_URL env var.
-const WS_URL = import.meta.env.VITE_WS_URL || 
-  (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + 
-  (import.meta.env.DEV ? 'localhost:3000' : window.location.host) + '/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3000/ws";
 const MAX_DELAY = 10_000;
 
 interface SocketContextType {

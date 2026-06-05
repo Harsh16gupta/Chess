@@ -12,9 +12,6 @@ import { sound } from "../utils/sound";
 import axios from "axios";
 import { stockfishEngine } from "../utils/stockfish";
 
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
-
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
 export const GAME_OVER = "game_over";
@@ -192,7 +189,7 @@ export default function Game() {
     try {
       setIsCoachLoading(true);
       const res = await axios.post(
-        `${API_URL}/api/coach/analyze`,
+        "http://localhost:3000/api/coach/analyze",
         {
           fen: chess.fen(),
           pgn: chess.history().join(" "),
