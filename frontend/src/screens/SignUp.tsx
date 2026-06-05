@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export default function SignUp() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -17,7 +20,7 @@ export default function SignUp() {
         const { email, name, picture } = googleRes.data;
 
         // Get a JWT from our backend (creates the user if new).
-        const backendRes = await axios.post("http://localhost:3000/api/auth/google", {
+        const backendRes = await axios.post(`${API_URL}/api/auth/google`, {
           email, name, picture,
         });
 

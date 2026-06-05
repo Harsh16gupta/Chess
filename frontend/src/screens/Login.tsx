@@ -4,6 +4,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export default function Login() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -19,7 +22,7 @@ export default function Login() {
     setErrorMsg("");
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/login", {
+      const res = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -50,7 +53,7 @@ export default function Login() {
 
         // Send to our backend to get a JWT token.
         // This creates the user in our DB if they don't exist.
-        const backendRes = await axios.post("http://localhost:3000/api/auth/google", {
+        const backendRes = await axios.post(`${API_URL}/api/auth/google`, {
           email, name, picture,
         });
 

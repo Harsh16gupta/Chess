@@ -42,7 +42,8 @@ interface GameDetail {
 }
 
 // ── API base URL ────────────────────────────────────────────────────
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
 
 // ══════════════════════════════════════════════════════════════════════
 //  Review Screen
@@ -62,7 +63,6 @@ export default function Review() {
   // ── Selected game replay state ────────────────────────────────────
   const [selectedGame, setSelectedGame] = useState<GameDetail | null>(null);
   const [movesList, setMovesList] = useState<string[]>([]);
-  const [movesData, setMovesData] = useState<MoveData[]>([]);
   const [activeMoveIdx, setActiveMoveIdx] = useState(-1);
   const [flipped, setFlipped] = useState(false);
 
@@ -121,7 +121,6 @@ export default function Review() {
 
       const game: GameDetail = res.data.game;
       setSelectedGame(game);
-      setMovesData(game.moves);
       setMovesList(game.moves.map((m) => m.san));
       setActiveMoveIdx(game.moves.length - 1);
       setCoachFeedback(null);

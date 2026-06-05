@@ -12,6 +12,9 @@ import { sound } from "../utils/sound";
 import axios from "axios";
 import { stockfishEngine } from "../utils/stockfish";
 
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
 export const GAME_OVER = "game_over";
@@ -71,8 +74,6 @@ export default function Game() {
 
   // Player & game state
   const [myName, setMyName] = useState<string | null>(null);
-
-  const [tempName, setTempName] = useState("");
   const [myColor, setMyColor] = useState<"white" | "black" | null>(null);
   const [players, setPlayers] = useState<{ white: string; black: string }>({
     white: "Waiting...",
@@ -189,7 +190,7 @@ export default function Game() {
     try {
       setIsCoachLoading(true);
       const res = await axios.post(
-        "http://localhost:3000/api/coach/analyze",
+        `${API_URL}/api/coach/analyze`,
         {
           fen: chess.fen(),
           pgn: chess.history().join(" "),
