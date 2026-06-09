@@ -77,7 +77,18 @@ export class GameManager {
     const existingSocket = this.userIdToSocket.get(userMeta.userId);
     if (existingSocket && existingSocket !== socket) {
       try {
-        existingSocket.close(4002, "Replaced by new connection");
+        this.safeSend(existingSocket, { type: "replaced" });
+        // Give the client 500ms to receive the message and close itself.
+        // If it fails to close within 500ms, we force-close it.
+        setTimeout(() => {
+          try {
+            if (existingSocket.readyState === existingSocket.OPEN) {
+              existingSocket.close(4002, "Replaced by new connection");
+            }
+          } catch {
+            // Ignore
+          }
+        }, 500);
       } catch {
         // Old socket might already be dead.
       }

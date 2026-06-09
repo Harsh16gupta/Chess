@@ -29,9 +29,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const retriesRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   const unmountedRef = useRef(false);
+  const replacedRef = useRef(false);
 
   useEffect(() => {
     unmountedRef.current = false;
+    replacedRef.current = false;
 
     // Only connect if the user is logged in.
     // Auth is required for all WebSocket connections.
@@ -52,6 +54,21 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       const url = `${WS_URL}?token=${currentToken}`;
       const ws = new WebSocket(url);
 
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "replaced") {
+            replacedRef.current = true;
+            console.warn("WebSocket connection replaced by new session — closing self");
+            ws.close(4002, "Replaced by new connection");
+          }
+        } catch {
+          // Ignore
+        }
+      };
+
+      ws.addEventListener("message", handleMessage);
+
       ws.onopen = () => {
         if (unmountedRef.current) {
           ws.close();
@@ -63,13 +80,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       };
 
       ws.onclose = (event) => {
+        ws.removeEventListener("message", handleMessage);
         if (unmountedRef.current) return;
         setSocket(null);
         setIsConnected(false);
 
-        // Code 4001 = auth failure. Don't retry — the token is invalid.
-        if (event.code === 4001) {
-          console.warn("WebSocket auth failed — not retrying");
+        // Code 4001 = auth failure.
+        // Code 4002 = duplicate connection/replaced by new connection.
+        // Or if we received a "replaced" message.
+        if (event.code === 4001 || event.code === 4002 || replacedRef.current) {
+          console.warn(`WebSocket closed (code ${event.code}, replaced: ${replacedRef.current}) — not retrying`);
           return;
         }
 
