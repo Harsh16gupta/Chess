@@ -30,6 +30,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const timerRef = useRef<number | null>(null);
   const unmountedRef = useRef(false);
   const replacedRef = useRef(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -48,11 +49,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     function connect() {
       if (unmountedRef.current) return;
 
+      // Prevent duplicate connections (e.g. React Strict Mode double-fires useEffect).
+      // If we already have a socket that's connecting or open, don't create another.
+      if (
+        wsRef.current &&
+        (wsRef.current.readyState === WebSocket.CONNECTING ||
+          wsRef.current.readyState === WebSocket.OPEN)
+      ) {
+        return;
+      }
+
       const currentToken = localStorage.getItem("token");
       if (!currentToken) return;
 
       const url = `${WS_URL}?token=${currentToken}`;
       const ws = new WebSocket(url);
+      wsRef.current = ws;
 
       const handleMessage = (event: MessageEvent) => {
         try {
@@ -81,6 +93,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
       ws.onclose = (event) => {
         ws.removeEventListener("message", handleMessage);
+
+        // Clear the ref if this is still the current socket.
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
+
         if (unmountedRef.current) return;
         setSocket(null);
         setIsConnected(false);
@@ -112,12 +130,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      setSocket((prev) => {
-        if (prev && prev.readyState === WebSocket.OPEN) {
-          prev.close();
-        }
-        return null;
-      });
+      // Close the ref'd socket directly — no state setter gymnastics needed.
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setSocket(null);
       setIsConnected(false);
     };
   }, [user]);
